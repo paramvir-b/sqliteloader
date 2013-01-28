@@ -1,0 +1,7 @@
+# Compiler intermediate files
+*.o
+*.out
+
+# Bin folder
+bin/
+tests/testrunpath/

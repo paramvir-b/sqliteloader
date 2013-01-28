@@ -1,0 +1,13 @@
+{
+    "fieldList": [
+        {
+            "name": "acct_id",
+            "type": "integer",
+            "length": 10
+        },
+        {
+            "name": "name",
+            "length": 10
+        }
+    ]
+}
