@@ -31,8 +31,11 @@ string get_file_contents(string filename)
         in.close();
         return(contents);
     }
+
+    return string("");
 }
 
+/*
 string trim(const string& str, const string& whitespace = " \t")
 {
     const int strBegin = str.find_first_not_of(whitespace);
@@ -56,6 +59,53 @@ string & replaceAll(std::string& str, const std::string& from, const std::string
 
     return str;
 }
+*/
+struct Layout;
+
+struct Field {
+    Layout *layoutPtr;
+    string name;
+    char type;
+    int length;
+    int endOffSet;
+    Field() : type('T'), length(0), endOffSet(0) {
+    }
+
+    friend ostream&  operator<<(ostream &outStream, Field &field) {
+        cout<<"[ name="<<field.name<<", type="<<field.type<<", length="<<field.length<<", endOffSet="<<field.endOffSet<<" ]";
+        return outStream;
+    }
+};
+
+struct Layout {
+    Field *fieldList;
+    int fieldListLen;
+    char type;
+    Layout(int size) : type('P') {
+        fieldList = new Field[size];
+        fieldListLen = size;
+    }
+
+    ~Layout() {
+        delete[] fieldList;
+    }
+
+    friend ostream&  operator<<(ostream &outStream, Layout &layout) {
+        outStream<<"[ type="<<layout.type<<", fieldList=";
+        for (int i = 0; i<layout.fieldListLen; i++) {
+            outStream<<layout.fieldList[i]<<", ";
+        }
+        outStream<<" ]";
+        return outStream;
+    }
+};
+
+void printStr(char *str, int start, int len) {
+    cout<<"'";
+    for(int i=start; i<start + len; i++) 
+        cout<<*(str+i);
+    cout<<"'"<<endl;
+}
 
 int main(int argc, char **argv) {
     clock_t cStartClock;
@@ -76,7 +126,6 @@ int main(int argc, char **argv) {
         .set_default("0").action("store_true")
         .help("Number of records after which commit operation is called on the data base");
     optparse::Values options = parser.parse_args(argc, argv);
-    vector<string> args = parser.args();
 
     string layoutFileName = options["l"];
     string inputFileName = options["i"];
@@ -100,41 +149,50 @@ int main(int argc, char **argv) {
     if(isDebug) cout<<cJSON_Print(fieldList)<<endl;
 
     // building create table query
+    // TODO  extract table name from file name or something
     string tableName = "t";
     int recordLen = 0;
     int fieldCounter = 0;
     int fieldListCount = cJSON_GetArraySize(fieldList);
+    Layout layout(fieldListCount);
     string createTableQry;
-    createTableQry = "CREATE TABLE " + tableName + " (";
+    createTableQry = "CREATE TABLE " + tableName + " ( id INTEGER PRIMARY KEY, ";
     string insertBindQry;
-    insertBindQry = "INSERT INTO " + tableName + " VALUES (";
+    insertBindQry = "INSERT INTO " + tableName + " VALUES ( NULL, ";
     for (int i=0; i<fieldListCount; i++) {
-        cJSON *field=cJSON_GetArrayItem(fieldList,i);
-        if(isDebug) cout<<cJSON_Print(field)<<endl;
+        cJSON *jsonField=cJSON_GetArrayItem(fieldList,i);
+        if(isDebug) cout<<cJSON_Print(jsonField)<<endl;
 
-        if(cJSON_GetObjectItem(field, "name") == NULL) {
+        if(cJSON_GetObjectItem(jsonField, "name") == NULL) {
             if(isDebug) cout<<"Name cannot be empty"<<endl;
             return 1;
         }
 
-        if(cJSON_GetObjectItem(field, "length") == NULL) {
+        if(cJSON_GetObjectItem(jsonField, "length") == NULL) {
             if(isDebug) cout<<"Length cannot be empty"<<endl;
             return 1;
         }
 
-        createTableQry += string(cJSON_GetObjectItem(field, "name")->valuestring);
+        layout.fieldList[i].name = cJSON_GetObjectItem(jsonField, "name")->valuestring;
+        createTableQry += layout.fieldList[i].name;
         char * type = (char *)"text";
-        if(cJSON_GetObjectItem(field, "type") != NULL)
-            type = cJSON_GetObjectItem(field, "type")->valuestring;
+        if(cJSON_GetObjectItem(jsonField, "type") != NULL)
+            type = cJSON_GetObjectItem(jsonField, "type")->valuestring;
 
-        if(strcmp(type, "text") == 0)
+        if(strcmp(type, "text") == 0) {
             createTableQry += " TEXT";
+            layout.fieldList[i].type = 'T';
+        }
 
-        if(strcmp(type, "integer") == 0)
+        if(strcmp(type, "integer") == 0) {
             createTableQry += " INTEGER";
+            layout.fieldList[i].type = 'I';
+        }
 
-        if(strcmp(type, "real") == 0)
+        if(strcmp(type, "real") == 0) {
             createTableQry += " REAL";
+            layout.fieldList[i].type = 'R';
+        }
 
         insertBindQry += "?";
         if(fieldCounter < fieldListCount - 1) {
@@ -142,7 +200,12 @@ int main(int argc, char **argv) {
             createTableQry += ", ";
         }
 
-        recordLen += cJSON_GetObjectItem(field, "length")->valueint;
+        layout.fieldList[i].length = cJSON_GetObjectItem(jsonField, "length")->valueint;
+        if(i > 0)
+            layout.fieldList[i].endOffSet = layout.fieldList[i-1].endOffSet + layout.fieldList[i].length;
+        else
+            layout.fieldList[i].endOffSet = layout.fieldList[i].length;
+        recordLen += layout.fieldList[i].length;
         fieldCounter++;
     }
     insertBindQry += ");";
@@ -150,15 +213,17 @@ int main(int argc, char **argv) {
     if(isDebug) cout<<"createTableQry="<<createTableQry<<endl;
     if(isDebug) cout<<"insertBindQry="<<insertBindQry<<endl;
 
+    cout<<layout<<endl;
+
     ifstream inFile;
     inFile.open(inputFileName.c_str());
 
     string dbFileName = inputFileName + ".db";
     remove(dbFileName.c_str());
 
-    int rc;
+    // int rc;
     // sqlite3 *db;
-    char *zErrMsg = 0;
+    // char *zErrMsg = 0;
 
     /*
        rc = sqlite3_open(dbFileName.c_str(), &db);
@@ -200,23 +265,62 @@ int main(int argc, char **argv) {
     string line;
 
     long recordCounter = 0;
+    int index = 0;
+    fieldCounter = 0;
+    char *lineStr = NULL;
     while(getline(inFile, line)) {
+
         /*
         // if(isDebug) cout<<"line="<<line<<endl;
         // string insertQry;
         // insertQry = "INSERT INTO " + tableName + " VALUES (";
         */
-        int index = 0;
-        int fieldCounter = 0;
+        index = 0;
+        fieldCounter = 0;
+        lineStr = (char *)line.c_str();
+        // cout<<lineStr<<endl;
         for (int i=0; i<fieldListCount; i++) {
-            cJSON *field=cJSON_GetArrayItem(fieldList,i);
-            int fieldLength = cJSON_GetObjectItem(field, "length")->valueint;
+            Field &field = layout.fieldList[i];
+            int fieldLength = field.length;
+            int start = -1;
+            int end = -1;
+            int len = -1;
+            int ch = 0;
+
+            if(field.type == 'T') {
+                // cout<<"index="<<index<<" endOffset="<<field.endOffSet<<endl;
+                for(int t=index; t<field.endOffSet; t++) {
+                    ch = *(lineStr + t);
+                    // cout<<"char="<<*(lineStr + t)<<endl;
+                    if(start == -1 && ch != ' ' && ch != '\n' && ch != '\r') {
+                        start = t;
+                        // cout<<"setting start="<<start<<endl;
+                    } else if(start > -1 && end == -1 && (ch == ' ' || ch == '\n' || ch == '\r')) {
+                        end = t;
+                        // cout<<"setting end="<<end<<endl;
+                    }
+                }
+
+                // cout<<"out start="<<start<<" end="<<end<<endl;
+                if(start == -1 && end == -1) {
+                    // empty put NULL
+                } else if(start > -1) {
+                    if(end == -1)
+                        end = field.endOffSet;
+                    len = end - start;
+                }
+                // cout<<"start="<<start<<" end="<<end<<" len="<<len<<endl;
+                // printStr(lineStr, start, len);
+            }
+
+            if(field.type == 'I') {
+            }
+
+            if(field.type == 'R') {
+            }
+#ifdef MY_X 
             string value = line.substr(index, fieldLength);
             // if(isDebug) cout<<"valueRaw="<<value<<endl;
-
-            char * type = (char *)"text";
-            if(cJSON_GetObjectItem(field, "type") != NULL)
-                type = cJSON_GetObjectItem(field, "type")->valuestring;
 
             //if(strcmp(type, "text") == 0) {
             if(type[0] == 't') {
@@ -300,6 +404,7 @@ int main(int argc, char **argv) {
             if(fieldCounter < fieldListCount - 1)
                 // insertQry += ", ";
 
+#endif
             index += fieldLength;
             fieldCounter++;
         }
@@ -328,6 +433,7 @@ int main(int argc, char **argv) {
            */
         // if(isDebug) cout<<"insertQry="<<insertQry<<endl;
         recordCounter++;
+        //if(recordCounter % 10 == 0) break;
         if(recordCounter % commitAfter == 0) {
             // if(isDebug) cout<<"Committing at recordCounter="<<recordCounter<<endl;
             /*
