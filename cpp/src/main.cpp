@@ -109,6 +109,7 @@ void printStr(char *str, int start, int len) {
 
 int main(int argc, char **argv) {
     clock_t cStartClock;
+    time_t  cStartTime;
 
     OptionParser parser = OptionParser() .description("Converts fixed length files to sqlite database");
 
@@ -133,6 +134,7 @@ int main(int argc, char **argv) {
     bool isDebug = atoi(options["d"].c_str()) == 1? true : false;
 
     cStartClock = clock();
+    cStartTime = time(NULL);
     if(isDebug) {
         cout<<"layoutFileName="<<layoutFileName<<endl;
         cout<<"inputFileName="<<inputFileName<<endl;
@@ -313,7 +315,29 @@ int main(int argc, char **argv) {
                 // printStr(lineStr, start, len);
             }
 
-            if(field.type == 'I') {
+            if(field.type == 'I' || field.type == 'R') {
+                for(int t=index; t<field.endOffSet; t++) {
+                    ch = *(lineStr + t);
+                    // cout<<"char="<<*(lineStr + t)<<endl;
+                    if(start == -1 && ch != ' ' && ch != '\n' && ch != '\r' && ch > '0' && ch <= '9') {
+                        start = t;
+                        // cout<<"setting start="<<start<<endl;
+                    } else if(start > -1 && end == -1 && (ch == ' ' || ch == '\n' || ch == '\r')) {
+                        end = t;
+                        // cout<<"setting end="<<end<<endl;
+                    }
+                }
+                // cout<<"out start="<<start<<" end="<<end<<endl;
+                if(start == -1 && end == -1) {
+                    // empty put NULL
+                    // cout<<"empty num"<<endl;
+                } else if(start > -1) {
+                    if(end == -1)
+                        end = field.endOffSet;
+                    len = end - start;
+                }
+                // cout<<"start="<<start<<" end="<<end<<" len="<<len<<endl;
+                // printStr(lineStr, start, len);
             }
 
             if(field.type == 'R') {
@@ -467,8 +491,10 @@ int main(int argc, char **argv) {
 
            sqlite3_close(db);
     */
-    double timeInSecs = (clock() - cStartClock) / (double)CLOCKS_PER_SEC;
-    printf("Imported %ld records in %4.2f seconds with %.2f opts/sec \n", recordCounter, timeInSecs, recordCounter/timeInSecs);
+    double clockTimeInSecs = (clock() - cStartClock) / (double)CLOCKS_PER_SEC;
+    long timeInSecs = time(NULL) - cStartTime;
+    // printf("Imported %ld records in %4.2f seconds with %.2f opts/sec \n", recordCounter, timeInSecs, recordCounter/timeInSecs);
+    printf("Imported %ld records in %ld seconds with %.2f opts/sec \n", recordCounter, timeInSecs, ((double)recordCounter/timeInSecs));
     inFile.close();
     cJSON_Delete(root);
 }
