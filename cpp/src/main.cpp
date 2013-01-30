@@ -397,139 +397,13 @@ int main(int argc, char **argv) {
                     }
 #    endif
 #endif
-                    /*
-                    int tempCh = lineStr[end];
-                    lineStr[end] = '\0';
-                    if(field.type == 'I') {
-                        long value = atol(lineStr + start);
-#ifndef DISABLE_SQL_CODE
-#    ifndef ENABLE_SQL_CHECKS
-                        sqlite3_bind_int64(sqlStmt, fieldCounter + 1, value);
-#    else
-                        rc = sqlite3_bind_int64(sqlStmt, fieldCounter + 1, value);
-                        if(rc != SQLITE_OK) {
-                            fprintf(stderr, "SQL error %d: int binding failed value=%s\n", rc, lineStr + start);
-                            return 1;
-                        }
-#    endif
-#endif
-                    } else {
-                        double value = atof(lineStr + start);
-#ifndef DISABLE_SQL_CODE
-                        rc = sqlite3_bind_double(sqlStmt, fieldCounter + 1, value);
-                        if(rc != SQLITE_OK) {
-                            fprintf(stderr, "SQL error %d: double binding failed value=%s\n", rc, lineStr + start);
-                            return 1;
-                        }
-#endif
-                    }
-                    lineStr[end] = tempCh;
-                    */
-                }
-                // cout<<"start="<<start<<" end="<<end<<" len="<<len<<endl;
-                // printStr(lineStr, start, len);
-            }
-
-#ifdef MY_X 
-            string value = line.substr(index, fieldLength);
-            // if(isDebug) cout<<"valueRaw="<<value<<endl;
-
-            //if(strcmp(type, "text") == 0) {
-            if(type[0] == 't') {
-                value = trim(value);
-                // value = replaceAll(value, "'", "''");
-                if(value.length() > 0) {
-                    /*
-                       rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1, value.c_str(), value.length(), SQLITE_TRANSIENT);
-                       if(rc != SQLITE_OK) {
-                       fprintf(stderr, "SQL error %d: text binding failed\n", rc);
-                       return 1;
-                       }
-                    // insertQry += "'" + value + "'";
-                    */
-                }
-                else {
-                    /*
-                       rc = sqlite3_bind_null(sqlStmt, fieldCounter + 1);
-                       if(rc != SQLITE_OK) {
-                       fprintf(stderr, "SQL error %d: text null binding failed\n", rc);
-                       return 1;
-                       }
-                    // insertQry += " NULL";
-                    */
                 }
             }
 
-            //if(strcmp(type, "integer") == 0) {
-            if(type[0] == 'i') {
-                value = trim(value);
-                value = trim(value, "0");
-                if(value.length() > 0) {
-                    /*
-                       rc = sqlite3_bind_int64(sqlStmt, fieldCounter + 1, atol(value.c_str()));
-                       if(rc != SQLITE_OK) {
-                       fprintf(stderr, "SQL error %d: int binding failed value=%s\n", rc, value.c_str());
-                       return 1;
-                       }
-                    // insertQry += value;
-                    */
-                }
-                else {
-                    /*
-                       rc = sqlite3_bind_null(sqlStmt, fieldCounter + 1);
-                       if(rc != SQLITE_OK) {
-                       fprintf(stderr, "SQL error %d: int null binding failed\n", rc);
-                       return 1;
-                       }
-                    // insertQry += " NULL";
-                    */
-                }
-            }
-
-            //if(strcmp(type, "real") == 0) {
-            if(type[0] == 'r') {
-                value = trim(value);
-                value = trim(value, "0");
-                if(value.length() > 0) {
-                    /*
-                       rc = sqlite3_bind_double(sqlStmt, fieldCounter + 1, atof(value.c_str()));
-                       if(rc != SQLITE_OK) {
-                       fprintf(stderr, "SQL error %d: double binding failed value=%s\n", rc, value.c_str());
-                       return 1;
-                       }
-                    // insertQry += value;
-                    */
-                }
-                else {
-                    /*
-                       rc = sqlite3_bind_null(sqlStmt, fieldCounter + 1);
-                       if(rc != SQLITE_OK) {
-                       fprintf(stderr, "SQL error %d: double null binding failed\n", rc);
-                       return 1;
-                       }
-                    // insertQry += " NULL";
-                    */
-                }
-            }
-            // if(isDebug) cout<<"valueAfter="<<value<<endl;
-
-            if(fieldCounter < fieldListCount - 1)
-                // insertQry += ", ";
-
-#endif
             index += fieldLength;
             fieldCounter++;
         }
 
-        // insertQry += ");";
-        /*
-
-           rc = sqlite3_exec(db, insertQry.c_str(), NULL, 0, &zErrMsg);
-           if(rc != SQLITE_OK) {
-           fprintf(stderr, "SQL error: %s\n", zErrMsg);
-           sqlite3_free(zErrMsg);
-           }
-           */
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
         sqlite3_step(sqlStmt);
@@ -548,26 +422,7 @@ int main(int argc, char **argv) {
         }
 #    endif
 #endif
-        // if(isDebug) cout<<"insertQry="<<insertQry<<endl;
         recordCounter++;
-        //if(recordCounter % 10 == 0) break;
-        //if(recordCounter % commitAfter == 0) {
-            // if(isDebug) cout<<"Committing at recordCounter="<<recordCounter<<endl;
-            /*
-               rc = sqlite3_exec(db, "COMMIT;", NULL, 0, &zErrMsg);
-               if(rc != SQLITE_OK) {
-               fprintf(stderr, "SQL error: %s\n", zErrMsg);
-               sqlite3_free(zErrMsg);
-               }
-
-               rc = sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, 0, &zErrMsg);
-               if(rc != SQLITE_OK) {
-               fprintf(stderr, "SQL error: %s\n", zErrMsg);
-               sqlite3_free(zErrMsg);
-               }
-
-            */
-        //}
     }
 
 #ifndef DISABLE_SQL_CODE
