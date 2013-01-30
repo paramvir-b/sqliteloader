@@ -43,30 +43,30 @@ string get_file_contents(string filename)
 }
 
 /*
-string trim(const string& str, const string& whitespace = " \t")
-{
-    const int strBegin = str.find_first_not_of(whitespace);
-    if (strBegin == string::npos)
-        return ""; // no content
+   string trim(const string& str, const string& whitespace = " \t")
+   {
+   const int strBegin = str.find_first_not_of(whitespace);
+   if (strBegin == string::npos)
+   return ""; // no content
 
-    const int strEnd = str.find_last_not_of(whitespace);
-    const int strRange = strEnd - strBegin + 1;
+   const int strEnd = str.find_last_not_of(whitespace);
+   const int strRange = strEnd - strBegin + 1;
 
-    return str.substr(strBegin, strRange);
-}
+   return str.substr(strBegin, strRange);
+   }
 
-string & replaceAll(std::string& str, const std::string& from, const std::string& to) {
-    if(from.empty())
-        return str;
-    size_t start_pos = 0;
-    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
-        str.replace(start_pos, from.length(), to);
-        start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
-    }
+   string & replaceAll(std::string& str, const std::string& from, const std::string& to) {
+   if(from.empty())
+   return str;
+   size_t start_pos = 0;
+   while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+   str.replace(start_pos, from.length(), to);
+   start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+   }
 
-    return str;
-}
-*/
+   return str;
+   }
+   */
 struct Layout;
 
 struct Field {
@@ -426,33 +426,33 @@ int main(int argc, char **argv) {
     }
 
 #ifndef DISABLE_SQL_CODE
-        rc = sqlite3_exec(db, "END TRANSACTION;", NULL, 0, &zErrMsg);
-        if(rc != SQLITE_OK) {
-            fprintf(stderr, "SQL error: %s\n", zErrMsg);
-            sqlite3_free(zErrMsg);
-        }
-        long insertTimeInSecs = time(NULL) - cInsertStartTime;
-        printf("Inserted %ld records in %ld seconds with %.2f opts/sec \n", recordCounter, insertTimeInSecs, ((double)recordCounter/insertTimeInSecs));
+    rc = sqlite3_exec(db, "END TRANSACTION;", NULL, 0, &zErrMsg);
+    if(rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+    long insertTimeInSecs = time(NULL) - cInsertStartTime;
+    printf("Inserted %ld records in %ld seconds with %.2f opts/sec \n", recordCounter, insertTimeInSecs, ((double)recordCounter/insertTimeInSecs));
 
-        time_t  cIndexStartTime;
-        string indexQry = "CREATE INDEX '" + tableName + "_" + layout.fieldList[0].name +"_index' ON '"
-           + tableName + "' ('" + layout.fieldList[0].name + "');";
-        if(isDebug) cout<<"indexQry="<<indexQry<<endl;
-        cIndexStartTime = time(NULL);
-        rc = sqlite3_exec(db, indexQry.c_str(), NULL, NULL, &zErrMsg);
-        if(rc != SQLITE_OK) {
-            fprintf(stderr, "SQL error: %s\n", zErrMsg);
-            sqlite3_free(zErrMsg);
-        }
-        long indexTimeInSecs = time(NULL) - cIndexStartTime;
-        printf("Indexed %ld records in %ld seconds with %.2f opts/sec \n", recordCounter, indexTimeInSecs, ((double)recordCounter/indexTimeInSecs));
+    time_t  cIndexStartTime;
+    string indexQry = "CREATE INDEX '" + tableName + "_" + layout.fieldList[0].name +"_index' ON '"
+        + tableName + "' ('" + layout.fieldList[0].name + "');";
+    if(isDebug) cout<<"indexQry="<<indexQry<<endl;
+    cIndexStartTime = time(NULL);
+    rc = sqlite3_exec(db, indexQry.c_str(), NULL, NULL, &zErrMsg);
+    if(rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+    long indexTimeInSecs = time(NULL) - cIndexStartTime;
+    printf("Indexed %ld records in %ld seconds with %.2f opts/sec \n", recordCounter, indexTimeInSecs, ((double)recordCounter/indexTimeInSecs));
 
-        rc = sqlite3_finalize(sqlStmt);
-        if(rc != SQLITE_OK) {
-            fprintf(stderr, "SQL error %d: reset failed\n", rc);
-        }
+    rc = sqlite3_finalize(sqlStmt);
+    if(rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error %d: reset failed\n", rc);
+    }
 
-        sqlite3_close(db);
+    sqlite3_close(db);
 #endif
     long timeInSecs = time(NULL) - cStartTime;
     // printf("Imported %ld records in %4.2f seconds with %.2f opts/sec \n", recordCounter, timeInSecs, recordCounter/timeInSecs);
