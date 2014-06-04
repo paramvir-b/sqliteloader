@@ -279,7 +279,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    rc = sqlite3_exec(db, "PRAGMA journal_mode = MEMORY;", NULL, 0, &zErrMsg);
+    rc = sqlite3_exec(db, "PRAGMA journal_mode = WAL;", NULL, 0, &zErrMsg);
     if(rc != SQLITE_OK) {
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
@@ -474,6 +474,13 @@ int main(int argc, char **argv) {
     rc = sqlite3_finalize(sqlStmt);
     if(rc != SQLITE_OK) {
         fprintf(stderr, "SQL error %d: reset failed\n", rc);
+    }
+
+    rc = sqlite3_exec(db, "PRAGMA journal_mode = DELETE;", NULL, 0, &zErrMsg);
+    if(rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+        return 1;
     }
 
     sqlite3_close(db);
