@@ -123,6 +123,9 @@ int main(int argc, char **argv) {
     parser.add_option("-i").dest("i")
         .metavar("<input_file>")
         .help("Input fixed length text file containing records to be ported to sqlite data base.");
+    parser.add_option("-o").dest("o")
+        .metavar("<output_file>")
+        .help("Output file name for the sqlite data base.");
     parser.add_option("-l").dest("l")
         .metavar("<layout_file>")
         .help("Layout file containing field definitions. These \
@@ -137,6 +140,7 @@ int main(int argc, char **argv) {
 
     string layoutFileName = options["l"];
     string inputFileName = options["i"];
+    string outputFileName = options["o"];
     long commitAfter = atol(options["c"].c_str());
     bool isDebug = atoi(options["d"].c_str()) == 1? true : false;
 
@@ -144,6 +148,7 @@ int main(int argc, char **argv) {
     if(isDebug) {
         cout<<"layoutFileName="<<layoutFileName<<endl;
         cout<<"inputFileName="<<inputFileName<<endl;
+        cout<<"outputFileName="<<outputFileName<<endl;
         cout<<"commitAfter="<<commitAfter<<endl;
         cout<<"isDebug="<<isDebug<<endl;
     }
@@ -223,10 +228,29 @@ int main(int argc, char **argv) {
 
     if(isDebug) cout<<layout<<endl;
 
+    istream *inStream;
     ifstream inFile;
-    inFile.open(inputFileName.c_str());
 
-    string dbFileName = inputFileName + ".db";
+    if(inputFileName.empty() || inputFileName.compare("-") == 0) {
+        // Disable the sync to improve performance.
+        // NOTE: Make sure we don't use C like I/O going forward.
+        cin.sync_with_stdio(false);
+        inStream = &cin;
+        if(isDebug) cout<<"Reading from stdin"<<endl;
+    } else {
+        if(isDebug) cout<<"Reading from "<<inputFileName<<endl;
+        inFile.open(inputFileName.c_str());
+        inStream = &inFile;
+    }
+
+    string dbFileName;
+    if(!outputFileName.empty()) dbFileName = outputFileName;
+    else if(!inputFileName.empty() && inputFileName != "-") dbFileName = inputFileName + ".db";
+    else {
+        cerr<<"No output file name can be determined"<<endl;
+        return -1;
+    }
+
     remove(dbFileName.c_str());
 
 #ifndef DISABLE_SQL_CODE
@@ -285,7 +309,7 @@ int main(int argc, char **argv) {
     int index = 0;
     fieldCounter = 0;
     char *lineStr = NULL;
-    while(getline(inFile, line)) {
+    while(getline(*inStream, line)) {
 
         /*
         // if(isDebug) cout<<"line="<<line<<endl;
