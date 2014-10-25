@@ -431,6 +431,7 @@ int main(int argc, char **argv) {
     string layoutFileName = options["l"];
     string inputFileName = options["i"];
     string outputFileName = options["o"];
+    string argTableName = options["t"];
     long commitAfter = atol(options["c"].c_str());
     bool isDebug = atoi(options["d"].c_str()) == 1? true : false;
 
@@ -473,13 +474,35 @@ int main(int argc, char **argv) {
 
     // building create table query
     // TODO  extract table name from file name or something
-    string tableName = "t";
     int recordLen = 0;
     int fieldCounter = 0;
     int fieldListCount = cJSON_GetArraySize(fieldList);
 
-//    tableName = cJSON_GetObjectItem(root, "name")->valuestring;
-//    if(isDebug) cout<<"tableName="<<tableName<<endl;
+    // TODO If we need to give default name. In future may be
+    // string tableName = "t";
+    string tableName;
+
+    cJSON *jLayoutName = cJSON_GetObjectItem(root, "name");
+    string layoutTableName;
+
+    if(jLayoutName != NULL ) {
+        layoutTableName = jLayoutName->valuestring;
+    }
+
+    if(argTableName.length() > 0 ) {
+        tableName = argTableName;
+    } else if(layoutTableName.length() > 0) {
+        tableName = layoutTableName;
+    }
+
+    if(tableName.length() <=0) {
+        cout<<"Table name not specified either in layout or as argument"<<endl;
+        parser.print_help();
+        return 1;
+    }
+
+
+    if(isDebug) cout<<"tableName="<<tableName<<endl;
     Layout layout(fieldListCount);
     string createTableQry;
     createTableQry = "CREATE TABLE " + tableName + " ( id INTEGER PRIMARY KEY, ";
