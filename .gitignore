@@ -5,6 +5,10 @@ ehthumbs.db
 Icon?
 Thumbs.db
 
+# DB files
+*.db
+*.db-shm
+
 # Editor related
 .*.swp
 Session.vim
