@@ -706,7 +706,7 @@ int main(int argc, char **argv) {
             "Delete if table already exists");
     parser.add_option("-a").dest("a").set_default("0").action("store_true").help(
             "Append to existing table if it does exist");
-    parser.add_option("-x").dest("x").set_default("0").action("store_true").help(
+    parser.add_option("-v").dest("v").set_default("0").action("store_true").help(
             "Debug mode");
     optparse::Values options = parser.parse_args(argc, argv);
 
@@ -715,7 +715,7 @@ int main(int argc, char **argv) {
     string outputFileName = options["o"];
     string argTableName = options["t"];
     long commitAfter = atol(options["c"].c_str());
-    bool isDebug = atoi(options["x"].c_str()) == 1 ? true : false;
+    bool isDebug = atoi(options["v"].c_str()) == 1 ? true : false;
     bool isAppendMode = atoi(options["a"].c_str()) == 1 ? true : false;
     bool isDeleteMode = atoi(options["d"].c_str()) == 1 ? true : false;
 
