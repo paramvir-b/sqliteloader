@@ -1,12 +1,17 @@
 {
     "fieldList": [
         {
-            "name": "acct_id",
+            "name": "record_id",
             "type": "integer",
             "length": 10
         },
         {
             "name": "name",
+            "length": 10
+        },
+        {
+            "name": "balance",
+            "type": "real",
             "length": 10
         }
     ]
