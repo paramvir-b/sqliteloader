@@ -85,10 +85,12 @@ struct Field {
 };
 
 struct Layout {
+    string name;
     Field *fieldList;
     int fieldListLen;
     char type;
-    Layout(int size) : type('P') {
+
+    Layout(const int size) : type('P') {
         fieldList = new Field[size];
         fieldListLen = size;
     }
@@ -98,7 +100,7 @@ struct Layout {
     }
 
     friend ostream&  operator<<(ostream &outStream, Layout &layout) {
-        outStream<<"[ type="<<layout.type<<", fieldList=";
+        outStream<<"[ "<<"name="<<layout.name<<", type="<<layout.type<<", fieldList=";
         for (int i = 0; i<layout.fieldListLen; i++) {
             outStream<<layout.fieldList[i]<<", ";
         }
@@ -401,59 +403,47 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
 //   return pData;
 }
 
-int main(int argc, char **argv) {
-    time_t  cStartTime;
-    time_t  cInsertStartTime;
+int checkIfTableExist(sqlite3 *db, string tableNameToCheck) {
+    int doesTableExist = 0;
 
-    OptionParser parser = OptionParser() .description("Converts fixed length files to sqlite database");
-
-    parser.add_option("-t").dest("t")
-        .metavar("<table_name>")
-        .help("Table to be created");
-    parser.add_option("-i").dest("i")
-        .metavar("<input_file>")
-        .help("Input fixed length text file containing records to be ported to sqlite data base.");
-    parser.add_option("-o").dest("o")
-        .metavar("<output_file>")
-        .help("Output file name for the sqlite data base.");
-    parser.add_option("-l").dest("l")
-        .metavar("<layout_file>")
-        .help("Layout file containing field definitions. These \
-                field definitions will be used for parsing fixed length record");
-    parser.add_option("-c").dest("c")
-        .metavar("<N>").set_default("10")
-        .help("Number of records after which commit operation is called on the data base");
-    parser.add_option("-d").dest("d")
-        .set_default("0").action("store_true")
-        .help("Number of records after which commit operation is called on the data base");
-    optparse::Values options = parser.parse_args(argc, argv);
-
-    string layoutFileName = options["l"];
-    string inputFileName = options["i"];
-    string outputFileName = options["o"];
-    string argTableName = options["t"];
-    long commitAfter = atol(options["c"].c_str());
-    bool isDebug = atoi(options["d"].c_str()) == 1? true : false;
-
-    if ( layoutFileName.length() == 0) {
-        cout<<"Layout file name cannot be empty"<<endl;
-        parser.print_help();
-        return 1;
+#ifndef DISABLE_SQL_CODE
+    int rc;
+    sqlite3_stmt *sqlStmt;
+    string queryStr = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='" + tableNameToCheck + "'";
+    rc = sqlite3_prepare_v2(db, queryStr.c_str(), queryStr.length(), &sqlStmt, NULL);
+    if(rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error %d: preparing failed\n", rc);
+        return 2;
     }
 
-    cStartTime = time(NULL);
-    if(isDebug) {
-        cout<<"layoutFileName="<<layoutFileName<<endl;
-        cout<<"inputFileName="<<inputFileName<<endl;
-        cout<<"outputFileName="<<outputFileName<<endl;
-        cout<<"commitAfter="<<commitAfter<<endl;
-        cout<<"isDebug="<<isDebug<<endl;
+    rc = sqlite3_step(sqlStmt);
+    if(rc != SQLITE_DONE && rc != SQLITE_ROW) {
+        fprintf(stderr, "SQL error %d: reset failed\n", rc);
+        return 2;
     }
 
+    int count = sqlite3_column_int(sqlStmt, 0);
+    if(count > 0) {
+        doesTableExist = 1;
+    }
+
+    rc = sqlite3_finalize(sqlStmt);
+    if(rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error %d: finalize failed\n", rc);
+        return 2;
+    }
+#endif
+    return doesTableExist;
+}
+
+int createTable(Layout &layout, sqlite3 *db, string tableNameToCreate) {
+    return 0;
+}
+
+Layout * parsetLayout(string layoutFileName, string argTableName) {
     // parsing json
     string json_str = get_file_contents(layoutFileName);
     cJSON *root = cJSON_Parse(json_str.c_str());
-    if(isDebug) cout<<cJSON_Print(root)<<endl;
     /* TODO WHEN WE RE-ENABLE FLAT FILE PARSING
     cJSON *jFileType = cJSON_GetObjectItem(root,"fileType");
     char fileType = 'D';
@@ -471,7 +461,6 @@ int main(int argc, char **argv) {
     if(isDebug) cout<<"fileType="<<fileType<<endl;
     */
     cJSON *fieldList = cJSON_GetObjectItem(root,"fieldList");
-    if(isDebug) cout<<cJSON_Print(fieldList)<<endl;
 
     // building create table query
     // TODO  extract table name from file name or something
@@ -497,61 +486,113 @@ int main(int argc, char **argv) {
     }
 
     if(tableName.length() <=0) {
-        cout<<"Table name not specified either in layout or as argument"<<endl;
-        parser.print_help();
-        return 1;
+        throw "Table name not specified either in layout or as argument";
     }
 
 
-    if(isDebug) cout<<"tableName="<<tableName<<endl;
-    Layout layout(fieldListCount);
-    string createTableQry;
-    createTableQry = "CREATE TABLE " + tableName + " ( id INTEGER PRIMARY KEY, ";
-    string insertBindQry;
-    insertBindQry = "INSERT INTO " + tableName + " VALUES ( NULL, ";
-    for (int i=0; i<fieldListCount; i++) {
-        cJSON *jsonField=cJSON_GetArrayItem(fieldList,i);
-        if(isDebug) cout<<cJSON_Print(jsonField)<<endl;
+    Layout *pLayout = new Layout(fieldListCount);
+    pLayout->name = tableName;
+    for (int i = 0; i < fieldListCount; i++) {
+        cJSON *jsonField = cJSON_GetArrayItem(fieldList, i);
 
-        if(cJSON_GetObjectItem(jsonField, "name") == NULL) {
-            cout<<"Name cannot be empty"<<endl;
-            return 1;
+        cJSON *jsonFieldName = cJSON_GetObjectItem(jsonField, "name");
+        if (jsonFieldName == NULL) {
+            throw "Name cannot be empty";
         }
 
-        if(cJSON_GetObjectItem(jsonField, "length") == NULL) {
-            cout<<"Name: "<<cJSON_GetObjectItem(jsonField, "name")->valuestring<<endl;
-            cout<<"Length cannot be empty"<<endl;
-            return 1;
+        if (cJSON_GetObjectItem(jsonField, "length") == NULL) {
+            string e = string("Name: ");
+            e += jsonFieldName->valuestring;
+            e += "\nLength cannot be empty";
+            throw e;
         }
 
-        layout.fieldList[i].name = cJSON_GetObjectItem(jsonField, "name")->valuestring;
-        createTableQry += layout.fieldList[i].name;
-        char * type = (char *)"text";
-        if(cJSON_GetObjectItem(jsonField, "type") != NULL)
+        pLayout->fieldList[i].name =
+                cJSON_GetObjectItem(jsonField, "name")->valuestring;
+        char * type = (char *) "text";
+        if (cJSON_GetObjectItem(jsonField, "type") != NULL)
             type = cJSON_GetObjectItem(jsonField, "type")->valuestring;
 
-        if(strcmp(type, "text") == 0) {
+        if (strcmp(type, "text") == 0) {
+            pLayout->fieldList[i].type = 'T';
+        }
+
+        if (strcmp(type, "integer") == 0) {
+            pLayout->fieldList[i].type = 'I';
+        }
+
+        if (strcmp(type, "real") == 0) {
+            pLayout->fieldList[i].type = 'R';
+        }
+
+        pLayout->fieldList[i].length =
+                cJSON_GetObjectItem(jsonField, "length")->valueint;
+        if (i > 0)
+            pLayout->fieldList[i].endOffSet =
+                    pLayout->fieldList[i - 1].endOffSet
+                            + pLayout->fieldList[i].length;
+        else
+            pLayout->fieldList[i].endOffSet = pLayout->fieldList[i].length;
+        recordLen += pLayout->fieldList[i].length;
+        fieldCounter++;
+    }
+
+    cJSON_Delete(root);
+
+    return pLayout;
+}
+
+string getCreateTableQuery(Layout& layout) {
+    // building create table query
+    int recordLen = 0;
+    int fieldCounter = 0;
+
+    string createTableQry;
+    createTableQry = "CREATE TABLE " + layout.name + " ( id INTEGER PRIMARY KEY, ";
+    for (int i=0; i<layout.fieldListLen; i++) {
+        createTableQry += layout.fieldList[i].name;
+
+        if(layout.fieldList[i].type == 'T') {
             createTableQry += " TEXT";
-            layout.fieldList[i].type = 'T';
         }
 
-        if(strcmp(type, "integer") == 0) {
+        if(layout.fieldList[i].type == 'I') {
             createTableQry += " INTEGER";
-            layout.fieldList[i].type = 'I';
         }
 
-        if(strcmp(type, "real") == 0) {
+        if(layout.fieldList[i].type == 'R') {
             createTableQry += " REAL";
-            layout.fieldList[i].type = 'R';
         }
 
-        insertBindQry += "?";
-        if(fieldCounter < fieldListCount - 1) {
-            insertBindQry += ", ";
+        if(fieldCounter < layout.fieldListLen - 1) {
             createTableQry += ", ";
         }
 
-        layout.fieldList[i].length = cJSON_GetObjectItem(jsonField, "length")->valueint;
+        if(i > 0)
+            layout.fieldList[i].endOffSet = layout.fieldList[i-1].endOffSet + layout.fieldList[i].length;
+        else
+            layout.fieldList[i].endOffSet = layout.fieldList[i].length;
+        recordLen += layout.fieldList[i].length;
+        fieldCounter++;
+    }
+    createTableQry += ");";
+    return createTableQry;
+}
+
+string getInsertQuery(Layout& layout) {
+    // building insert table query
+    int recordLen = 0;
+    int fieldCounter = 0;
+
+    string insertBindQry;
+    insertBindQry = "INSERT INTO " + layout.name + " VALUES ( NULL, ";
+    for (int i=0; i<layout.fieldListLen; i++) {
+
+        insertBindQry += "?";
+        if(fieldCounter < layout.fieldListLen - 1) {
+            insertBindQry += ", ";
+        }
+
         if(i > 0)
             layout.fieldList[i].endOffSet = layout.fieldList[i-1].endOffSet + layout.fieldList[i].length;
         else
@@ -560,11 +601,100 @@ int main(int argc, char **argv) {
         fieldCounter++;
     }
     insertBindQry += ");";
-    createTableQry += ");";
-    if(isDebug) cout<<"createTableQry="<<createTableQry<<endl;
-    if(isDebug) cout<<"insertBindQry="<<insertBindQry<<endl;
+    return insertBindQry;
+}
 
-    if(isDebug) cout<<layout<<endl;
+int createIndex(sqlite3 *db, const Layout& layout, string indexOnFieldName) {
+#ifndef DISABLE_SQL_CODE
+    int rc;
+    char *zErrMsg = 0;
+
+    string indexQry = "CREATE INDEX '" + layout.name + "_" + indexOnFieldName +"_index' ON '"
+        + layout.name + "' ('" + layout.fieldList[0].name + "');";
+    cout<<"indexQry="<<indexQry<<endl;
+    rc = sqlite3_exec(db, indexQry.c_str(), NULL, NULL, &zErrMsg);
+    if(rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+
+    return 0;
+#endif
+}
+
+int main(int argc, char **argv) {
+    time_t  cStartTime;
+    time_t  cInsertStartTime;
+
+    OptionParser parser = OptionParser() .description("Converts fixed length files to sqlite database");
+
+    parser.add_option("-t").dest("t")
+        .metavar("<table_name>")
+        .help("Table to be created");
+    parser.add_option("-i").dest("i")
+        .metavar("<input_file>")
+        .help("Input fixed length text file containing records to be ported to sqlite data base.");
+    parser.add_option("-o").dest("o")
+        .metavar("<output_file>")
+        .help("Output file name for the sqlite data base.");
+    parser.add_option("-l").dest("l")
+        .metavar("<layout_file>")
+        .help("Layout file containing field definitions. These \
+                field definitions will be used for parsing fixed length record");
+    parser.add_option("-c").dest("c")
+        .metavar("<N>").set_default("10")
+        .help("Number of records after which commit operation is called on the data base");
+    parser.add_option("-d").dest("d")
+        .set_default("0").action("store_true")
+        .help("Delete if table already exists");
+    parser.add_option("-a").dest("a")
+        .set_default("0").action("store_true")
+        .help("Append to existing table if it does exist");
+    parser.add_option("-x").dest("x")
+        .set_default("0").action("store_true")
+        .help("Debug mode");
+    optparse::Values options = parser.parse_args(argc, argv);
+
+    string layoutFileName = options["l"];
+    string inputFileName = options["i"];
+    string outputFileName = options["o"];
+    string argTableName = options["t"];
+    long commitAfter = atol(options["c"].c_str());
+    bool isDebug = atoi(options["x"].c_str()) == 1? true : false;
+    bool isAppendMode = atoi(options["a"].c_str()) == 1? true : false;
+    bool isDeleteMode = atoi(options["d"].c_str()) == 1? true : false;
+
+    if (layoutFileName.length() == 0) {
+        cout << "Layout file name cannot be empty" << endl;
+        parser.print_help();
+        return 1;
+    }
+
+    if (isAppendMode && isDeleteMode) {
+        cout << "Append mode and delete mode cannot co-exist" << endl;
+        parser.print_help();
+        return 1;
+    }
+
+    cStartTime = time(NULL);
+    if (isDebug) {
+        cout << "layoutFileName=" << layoutFileName << endl;
+        cout << "inputFileName=" << inputFileName << endl;
+        cout << "outputFileName=" << outputFileName << endl;
+        cout << "commitAfter=" << commitAfter << endl;
+        cout << "isDebug=" << isDebug << endl;
+    }
+
+    Layout *pLayout;
+    try {
+        pLayout = parsetLayout(layoutFileName, argTableName);
+    } catch (string& e) {
+        cout << e << endl;
+        parser.print_help();
+        return 1;
+    }
+
+    if(isDebug) cout<<*pLayout<<endl;
 
     istream *inStream;
     ifstream inFile;
@@ -603,9 +733,22 @@ int main(int argc, char **argv) {
         return(1);
     }
 
-    rc = sqlite3_exec(db, createTableQry.c_str(), NULL, 0, &zErrMsg);
-    if(rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+    int doesTableExist = checkIfTableExist(db, pLayout->name);
+    if(isDebug) cout<<"doesTableExist="<<doesTableExist<<endl;
+    if(doesTableExist == 2) {
+        return 1;
+    } 
+    
+    if(doesTableExist == 0) {
+        
+    }
+
+    rc = sqlite3_exec(db, getCreateTableQuery(*pLayout).c_str(), NULL, 0,
+            &zErrMsg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Create query=%s\n",
+                getCreateTableQuery(*pLayout).c_str());
+        fprintf(stderr, "SQL error for create table: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
         return 1;
     }
@@ -636,8 +779,11 @@ int main(int argc, char **argv) {
 #endif
     sqlite3_stmt *sqlStmt;
 #ifndef DISABLE_SQL_CODE
-    rc = sqlite3_prepare_v2(db, insertBindQry.c_str(), insertBindQry.length(), &sqlStmt, NULL);
-    if(rc != SQLITE_OK) {
+    string insertBindQry = getInsertQuery(*pLayout);
+    rc = sqlite3_prepare_v2(db, insertBindQry.c_str(), insertBindQry.length(),
+            &sqlStmt, NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Prepare query=%s\n", insertBindQry.c_str());
         fprintf(stderr, "SQL error %d: preparing failed\n", rc);
         return 1;
     }
@@ -647,9 +793,9 @@ int main(int argc, char **argv) {
 
     long recordCounter = 0;
     int index = 0;
-    fieldCounter = 0;
+    int fieldCounter = 0;
     char *lineStr = NULL;
-    Data *pData = new Data[fieldListCount];
+//    Data *pData = new Data[fieldListCount];
     while(getline(*inStream, line)) {
 
         /*
@@ -661,7 +807,7 @@ int main(int argc, char **argv) {
         lineStr = (char *)line.c_str();
         // cout<<lineStr<<endl;
         //parseFixedLenRecord(layout, lineStr, sqlStmt);
-        parseDelimRecord(layout, NULL, lineStr, sqlStmt);
+        parseDelimRecord(*pLayout, NULL, lineStr, sqlStmt);
 
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
@@ -693,23 +839,17 @@ int main(int argc, char **argv) {
     long insertTimeInSecs = time(NULL) - cInsertStartTime;
     printf("Inserted %ld records in %ld seconds with %.2f opts/sec \n", recordCounter, insertTimeInSecs, ((double)recordCounter/insertTimeInSecs));
 
-    time_t  cIndexStartTime;
-    string indexQry = "CREATE INDEX '" + tableName + "_" + layout.fieldList[0].name +"_index' ON '"
-        + tableName + "' ('" + layout.fieldList[0].name + "');";
-    if(isDebug) cout<<"indexQry="<<indexQry<<endl;
-    cIndexStartTime = time(NULL);
-    rc = sqlite3_exec(db, indexQry.c_str(), NULL, NULL, &zErrMsg);
-    if(rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
-    }
-    long indexTimeInSecs = time(NULL) - cIndexStartTime;
-    printf("Indexed %ld records in %ld seconds with %.2f opts/sec \n", recordCounter, indexTimeInSecs, ((double)recordCounter/indexTimeInSecs));
-
     rc = sqlite3_finalize(sqlStmt);
     if(rc != SQLITE_OK) {
         fprintf(stderr, "SQL error %d: reset failed\n", rc);
     }
+
+    time_t  cIndexStartTime;
+    cIndexStartTime = time(NULL);
+    createIndex(db, *pLayout, pLayout->fieldList[0].name);
+    long indexTimeInSecs = time(NULL) - cIndexStartTime;
+    printf("Indexed %ld records in %ld seconds with %.2f opts/sec \n", recordCounter, indexTimeInSecs, ((double)recordCounter/indexTimeInSecs));
+
 
     rc = sqlite3_exec(db, "PRAGMA journal_mode = DELETE;", NULL, 0, &zErrMsg);
     if(rc != SQLITE_OK) {
@@ -724,6 +864,5 @@ int main(int argc, char **argv) {
     // printf("Imported %ld records in %4.2f seconds with %.2f opts/sec \n", recordCounter, timeInSecs, recordCounter/timeInSecs);
     printf("Imported %ld records in %ld seconds with %.2f opts/sec \n", recordCounter, timeInSecs, ((double)recordCounter/timeInSecs));
     inFile.close();
-    cJSON_Delete(root);
 }
 
