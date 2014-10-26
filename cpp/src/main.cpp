@@ -34,6 +34,8 @@ string get_file_contents(string filename) {
         in.read(&contents[0], contents.size());
         in.close();
         return (contents);
+    } else {
+        throw string("Unable to open file: " + filename);
     }
 
     return string("");
@@ -420,49 +422,14 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
 //   return pData;
 }
 
-int checkIfTableExist(sqlite3 *db, string tableNameToCheck) {
-    int doesTableExist = 0;
-
-#ifndef DISABLE_SQL_CODE
-    int rc;
-    sqlite3_stmt *sqlStmt;
-    string queryStr =
-            "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='"
-                    + tableNameToCheck + "'";
-    rc = sqlite3_prepare_v2(db, queryStr.c_str(), queryStr.length(), &sqlStmt,
-    NULL);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error %d: preparing failed\n", rc);
-        return 2;
-    }
-
-    rc = sqlite3_step(sqlStmt);
-    if (rc != SQLITE_DONE && rc != SQLITE_ROW) {
-        fprintf(stderr, "SQL error %d: reset failed\n", rc);
-        return 2;
-    }
-
-    int count = sqlite3_column_int(sqlStmt, 0);
-    if (count > 0) {
-        doesTableExist = 1;
-    }
-
-    rc = sqlite3_finalize(sqlStmt);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error %d: finalize failed\n", rc);
-        return 2;
-    }
-#endif
-    return doesTableExist;
-}
-
-int createTable(Layout &layout, sqlite3 *db, string tableNameToCreate) {
-    return 0;
-}
-
 Layout * parsetLayout(string layoutFileName, string argTableName) {
     // parsing json
     string json_str = get_file_contents(layoutFileName);
+
+    if (layoutFileName.length() <= 0) {
+        throw string("Empty layout file layoutFileName=" + layoutFileName);
+    }
+
     cJSON *root = cJSON_Parse(json_str.c_str());
     /* TODO WHEN WE RE-ENABLE FLAT FILE PARSING
      cJSON *jFileType = cJSON_GetObjectItem(root,"fileType");
@@ -626,6 +593,77 @@ string getInsertQuery(Layout& layout) {
     return insertBindQry;
 }
 
+int checkIfTableExist(sqlite3 *db, string tableNameToCheck) {
+    int doesTableExist = 0;
+
+#ifndef DISABLE_SQL_CODE
+    int rc;
+    sqlite3_stmt *sqlStmt;
+    string queryStr =
+            "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='"
+                    + tableNameToCheck + "'";
+    rc = sqlite3_prepare_v2(db, queryStr.c_str(), queryStr.length(), &sqlStmt,
+    NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error %d: preparing failed\n", rc);
+        return 2;
+    }
+
+    rc = sqlite3_step(sqlStmt);
+    if (rc != SQLITE_DONE && rc != SQLITE_ROW) {
+        fprintf(stderr, "SQL error %d: reset failed\n", rc);
+        return 2;
+    }
+
+    int count = sqlite3_column_int(sqlStmt, 0);
+    if (count > 0) {
+        doesTableExist = 1;
+    }
+
+    rc = sqlite3_finalize(sqlStmt);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error %d: finalize failed\n", rc);
+        return 2;
+    }
+#endif
+    return doesTableExist;
+}
+
+void createTable(sqlite3 *db, Layout &layout) {
+
+#ifndef DISABLE_SQL_CODE
+    int rc;
+    char *zErrMsg = 0;
+
+    rc = sqlite3_exec(db, getCreateTableQuery(layout).c_str(), NULL, 0,
+            &zErrMsg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Create query=%s\n",
+                getCreateTableQuery(layout).c_str());
+        fprintf(stderr, "SQL error for create table: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+        throw string("Error occurred creating table");
+    }
+#endif
+}
+
+void deleteTable(sqlite3 *db, Layout &layout) {
+
+#ifndef DISABLE_SQL_CODE
+    int rc;
+    char *zErrMsg = 0;
+
+    string query = "DROP table " + layout.name;
+    rc = sqlite3_exec(db, query.c_str(), NULL, 0, &zErrMsg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Delete query=%s\n", query.c_str());
+        fprintf(stderr, "SQL error for delete table: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+        throw string("Error occurred deleting table");
+    }
+#endif
+}
+
 int createIndex(sqlite3 *db, const Layout& layout, string indexOnFieldName) {
 #ifndef DISABLE_SQL_CODE
     int rc;
@@ -761,17 +799,24 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    if (doesTableExist == 0) {
+    try {
+        if (doesTableExist == 0 && isAppendMode) {
+            createTable(db, *pLayout);
+        } else
 
-    }
+        if (doesTableExist == 0 && isDeleteMode) {
+            createTable(db, *pLayout);
+        } else
 
-    rc = sqlite3_exec(db, getCreateTableQuery(*pLayout).c_str(), NULL, 0,
-            &zErrMsg);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "Create query=%s\n",
-                getCreateTableQuery(*pLayout).c_str());
-        fprintf(stderr, "SQL error for create table: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
+        if (doesTableExist == 1 && isDeleteMode) {
+            deleteTable(db, *pLayout);
+            createTable(db, *pLayout);
+        } else if (doesTableExist == 1 && isAppendMode) {
+        } else {
+            createTable(db, *pLayout);
+        }
+    } catch (string& e) {
+        cout << e << endl;
         return 1;
     }
 
