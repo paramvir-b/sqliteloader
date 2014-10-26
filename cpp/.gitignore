@@ -2,6 +2,7 @@
 .classpath
 .project
 .cproject
+.settings/
 
 # Compiler intermediate files
 *.o
