@@ -672,9 +672,10 @@ int createIndex(sqlite3 *db, const Layout& layout, string indexOnFieldName) {
     string indexQry = "CREATE INDEX '" + layout.name + "_" + indexOnFieldName
             + "_index' ON '" + layout.name + "' ('" + layout.fieldList[0].name
             + "');";
-    cout << "indexQry=" << indexQry << endl;
+
     rc = sqlite3_exec(db, indexQry.c_str(), NULL, NULL, &zErrMsg);
     if (rc != SQLITE_OK) {
+        fprintf(stderr, "indexQry: %s\n", indexQry.c_str());
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
     }
@@ -934,6 +935,7 @@ int main(int argc, char **argv) {
     // printf("Imported %ld records in %4.2f seconds with %.2f opts/sec \n", recordCounter, timeInSecs, recordCounter/timeInSecs);
     printf("Imported %ld records in %ld seconds with %.2f opts/sec \n",
             recordCounter, timeInSecs, ((double) recordCounter / timeInSecs));
+    printf("DB file is at: %s\n", dbFileName.c_str());
     inFile.close();
 }
 
