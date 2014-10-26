@@ -454,8 +454,8 @@ int main(int argc, char **argv) {
     string json_str = get_file_contents(layoutFileName);
     cJSON *root = cJSON_Parse(json_str.c_str());
     if(isDebug) cout<<cJSON_Print(root)<<endl;
+    /* TODO WHEN WE RE-ENABLE FLAT FILE PARSING
     cJSON *jFileType = cJSON_GetObjectItem(root,"fileType");
-/*
     char fileType = 'D';
 
     if( jFileType != NULL ) {
@@ -468,7 +468,8 @@ int main(int argc, char **argv) {
             return 1;
         }
     }
-*/
+    if(isDebug) cout<<"fileType="<<fileType<<endl;
+    */
     cJSON *fieldList = cJSON_GetObjectItem(root,"fieldList");
     if(isDebug) cout<<cJSON_Print(fieldList)<<endl;
 
