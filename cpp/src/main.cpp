@@ -696,6 +696,7 @@ int createIndex(sqlite3 *db, const Layout& layout, string indexOnFieldName) {
 #endif
 }
 
+// TODO NEED TO ADD META TABLE TO ADD CONTENTS LIKE TABLE UPDATED, CREATED ETC
 int main(int argc, char **argv) {
     time_t cStartTime;
     time_t cInsertStartTime;
