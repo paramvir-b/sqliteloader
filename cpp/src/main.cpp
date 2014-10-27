@@ -423,7 +423,7 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
 //   return pData;
 }
 
-Layout * parsetLayout(string layoutFileName, string argTableName) {
+Layout * parseLayout(string layoutFileName, string argTableName) {
     // parsing json
     string json_str = get_file_contents(layoutFileName);
 
@@ -754,7 +754,7 @@ int main(int argc, char **argv) {
 
     Layout *pLayout;
     try {
-        pLayout = parsetLayout(layoutFileName, argTableName);
+        pLayout = parseLayout(layoutFileName, argTableName);
     } catch (string& e) {
         cout << e << endl;
         parser.print_help();
