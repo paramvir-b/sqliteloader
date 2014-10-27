@@ -91,9 +91,10 @@ struct Layout {
     Field *fieldList;
     int fieldListLen;
     char type;
+    char separator;
 
     Layout(const int size) :
-            type('P') {
+            type('D'), separator('\t') {
         fieldList = new Field[size];
         fieldListLen = size;
     }
@@ -136,7 +137,7 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr,
         sqlite3_stmt *sqlStmt) {
     DelimFileData *pDelimInfo = (DelimFileData *) pInfo;
     //char separator = pDelimInfo->separator;
-    char separator = '\t';
+    char separator = layout.separator;
 #ifndef DISABLE_SQL_CODE
     int rc;
 #endif
@@ -432,7 +433,7 @@ Layout * parsetLayout(string layoutFileName, string argTableName) {
 
     cJSON *root = cJSON_Parse(json_str.c_str());
     /* TODO WHEN WE RE-ENABLE FLAT FILE PARSING
-     cJSON *jFileType = cJSON_GetObjectItem(root,"fileType");
+     cJSON *jFileType = cJSON_GetObjectItem(root,"type");
      char fileType = 'D';
 
      if( jFileType != NULL ) {
@@ -478,6 +479,14 @@ Layout * parsetLayout(string layoutFileName, string argTableName) {
 
     Layout *pLayout = new Layout(fieldListCount);
     pLayout->name = tableName;
+
+    if(pLayout->type == 'D') {
+        cJSON *jSeparator = cJSON_GetObjectItem(root, "separator");
+        if(jSeparator != NULL && strlen(jSeparator->valuestring) > 0) {
+            pLayout->separator = jSeparator->valuestring[0];
+        }
+    }
+
     for (int i = 0; i < fieldListCount; i++) {
         cJSON *jsonField = cJSON_GetArrayItem(fieldList, i);
 
@@ -486,15 +495,27 @@ Layout * parsetLayout(string layoutFileName, string argTableName) {
             throw "Name cannot be empty";
         }
 
-        if (cJSON_GetObjectItem(jsonField, "length") == NULL) {
-            string e = string("Name: ");
-            e += jsonFieldName->valuestring;
-            e += "\nLength cannot be empty";
-            throw e;
+        if (pLayout->type == 'F') {
+            // Check length if it is flat file
+            if (cJSON_GetObjectItem(jsonField, "length") == NULL) {
+                string e = string("Name: ");
+                e += jsonFieldName->valuestring;
+                e += "\nLength cannot be empty";
+                throw e;
+            }
+
+            pLayout->fieldList[i].length = cJSON_GetObjectItem(jsonField,
+                    "length")->valueint;
+            if (i > 0)
+                pLayout->fieldList[i].endOffSet =
+                        pLayout->fieldList[i - 1].endOffSet
+                                + pLayout->fieldList[i].length;
+            else
+                pLayout->fieldList[i].endOffSet = pLayout->fieldList[i].length;
+            recordLen += pLayout->fieldList[i].length;
         }
 
-        pLayout->fieldList[i].name =
-                cJSON_GetObjectItem(jsonField, "name")->valuestring;
+        pLayout->fieldList[i].name = jsonFieldName->valuestring;
         char * type = (char *) "text";
         if (cJSON_GetObjectItem(jsonField, "type") != NULL)
             type = cJSON_GetObjectItem(jsonField, "type")->valuestring;
@@ -511,15 +532,6 @@ Layout * parsetLayout(string layoutFileName, string argTableName) {
             pLayout->fieldList[i].type = 'R';
         }
 
-        pLayout->fieldList[i].length =
-                cJSON_GetObjectItem(jsonField, "length")->valueint;
-        if (i > 0)
-            pLayout->fieldList[i].endOffSet =
-                    pLayout->fieldList[i - 1].endOffSet
-                            + pLayout->fieldList[i].length;
-        else
-            pLayout->fieldList[i].endOffSet = pLayout->fieldList[i].length;
-        recordLen += pLayout->fieldList[i].length;
         fieldCounter++;
     }
 
@@ -936,6 +948,7 @@ int main(int argc, char **argv) {
     printf("Imported %ld records in %ld seconds with %.2f opts/sec \n",
             recordCounter, timeInSecs, ((double) recordCounter / timeInSecs));
     printf("DB file is at: %s\n", dbFileName.c_str());
+    delete pLayout;
     inFile.close();
 }
 
