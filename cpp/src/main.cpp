@@ -480,9 +480,9 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
     Layout *pLayout = new Layout(fieldListCount);
     pLayout->name = tableName;
 
-    if(pLayout->type == 'D') {
+    if (pLayout->type == 'D') {
         cJSON *jSeparator = cJSON_GetObjectItem(root, "separator");
-        if(jSeparator != NULL && strlen(jSeparator->valuestring) > 0) {
+        if (jSeparator != NULL && strlen(jSeparator->valuestring) > 0) {
             pLayout->separator = jSeparator->valuestring[0];
         }
     }
@@ -841,12 +841,13 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    rc = sqlite3_exec(db, "PRAGMA journal_mode = WAL;", NULL, 0, &zErrMsg);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
-        return 1;
-    }
+    // TODO COMMENTING OUT WAL MODE
+//    rc = sqlite3_exec(db, "PRAGMA journal_mode = WAL;", NULL, 0, &zErrMsg);
+//    if (rc != SQLITE_OK) {
+//        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+//        sqlite3_free(zErrMsg);
+//        return 1;
+//    }
 
     cInsertStartTime = time(NULL);
 
