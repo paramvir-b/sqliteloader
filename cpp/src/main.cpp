@@ -546,8 +546,8 @@ string getCreateTableQuery(Layout& layout) {
     int fieldCounter = 0;
 
     string createTableQry;
-    createTableQry = "CREATE TABLE " + layout.name
-            + " ( id INTEGER PRIMARY KEY, ";
+    createTableQry = "CREATE TABLE '" + layout.name
+            + "' ( id INTEGER PRIMARY KEY, ";
     for (int i = 0; i < layout.fieldListLen; i++) {
         createTableQry += layout.fieldList[i].name;
 
@@ -585,7 +585,7 @@ string getInsertQuery(Layout& layout) {
     int fieldCounter = 0;
 
     string insertBindQry;
-    insertBindQry = "INSERT INTO " + layout.name + " VALUES ( NULL, ";
+    insertBindQry = "INSERT INTO '" + layout.name + "' VALUES ( NULL, ";
     for (int i = 0; i < layout.fieldListLen; i++) {
 
         insertBindQry += "?";
@@ -665,7 +665,7 @@ void deleteTable(sqlite3 *db, Layout &layout) {
     int rc;
     char *zErrMsg = 0;
 
-    string query = "DROP table " + layout.name;
+    string query = "DROP table '" + layout.name + "'";
     rc = sqlite3_exec(db, query.c_str(), NULL, 0, &zErrMsg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Delete query=%s\n", query.c_str());
@@ -696,11 +696,51 @@ int createIndex(sqlite3 *db, const Layout& layout, string indexOnFieldName) {
 #endif
 }
 
-// TODO NEED TO ADD META TABLE TO ADD CONTENTS LIKE TABLE UPDATED, CREATED ETC
-int main(int argc, char **argv) {
-    time_t cStartTime;
-    time_t cInsertStartTime;
+string getCSVLayoutHelpExample() {
+    return "\nExample of csv layout:"
+            "\n{"
+            "\n  \"fieldList\": ["
+            "\n  {"
+            "\n    \"name\": \"record_id\","
+            "\n    \"type\": \"integer\","
+            "\n    \"length\": 10"
+            "\n    },"
+            "\n{";
+    //            "name": "name",
+    //            "length": 10
+    //        },
+    //        {
+    //            "name": "balance",
+    //            "type": "real",
+    //            "length": 10
+    //        }
+    //    ]
+    //}layout:\n");
 
+}
+
+string getLayoutHelp() {
+    return "\nLayout definition:"
+            "\n General layout structure is define in json format:"
+            "\n   <LayoutDefinition>"
+            "\n     <FieldDefinitionList>"
+            "\n       <FieldDefinition>"
+            "\n Layout Definition Parameters:"
+            "\n   name      : Layout name that will be used as table name. Can also be passed as an argument to utility."
+            "\n               Example: book_info"
+            "\n   type      : csv/flat. 'csv' for delimited file and 'flat' for flat files"
+            "\n               Example: csv"
+            "\n   separator : Separator used for file. Only valid for csv files."
+            "\n Layout Field Definition Parameters:"
+            "\n   name   : Field name. It will become the column name in db"
+            "\n            Example: balance"
+            "\n   type   : text/integer/real. 'text' text field like \"hello\". 'integer' for integers like 10. 'real' for decimals like 5.6"
+            "\n            Example: real"
+            "\n   length : Any integer number. Length for a given field. Only valid for flat files"
+            "\n            Example: 7";
+}
+
+OptionParser createParser() {
     OptionParser parser = OptionParser().description(
             "Converts fixed length files to sqlite database");
 
@@ -712,7 +752,7 @@ int main(int argc, char **argv) {
             "Output file name for the sqlite data base.");
     parser.add_option("-l").dest("l").metavar("<layout_file>").help(
             "Layout file containing field definitions. These \
-                field definitions will be used for parsing fixed length record");
+                    field definitions will be used for parsing fixed length record");
     parser.add_option("-c").dest("c").metavar("<N>").set_default("10").help(
             "Number of records after which commit operation is called on the data base");
     parser.add_option("-d").dest("d").set_default("0").action("store_true").help(
@@ -721,6 +761,16 @@ int main(int argc, char **argv) {
             "Append to existing table if it does exist");
     parser.add_option("-v").dest("v").set_default("0").action("store_true").help(
             "Debug mode");
+    parser.epilog(getLayoutHelp() + getCSVLayoutHelpExample());
+    return parser;
+}
+
+// TODO NEED TO ADD META TABLE TO ADD CONTENTS LIKE TABLE UPDATED, CREATED ETC
+int main(int argc, char **argv) {
+    time_t cStartTime;
+    time_t cInsertStartTime;
+
+    OptionParser parser = createParser();
     optparse::Values options = parser.parse_args(argc, argv);
 
     string layoutFileName = options["l"];
@@ -928,13 +978,13 @@ int main(int argc, char **argv) {
         fprintf(stderr, "SQL error %d: reset failed\n", rc);
     }
 
-    time_t cIndexStartTime;
-    cIndexStartTime = time(NULL);
-    createIndex(db, *pLayout, pLayout->fieldList[0].name);
-    long indexTimeInSecs = time(NULL) - cIndexStartTime;
-    printf("Indexed %ld records in %ld seconds with %.2f opts/sec \n",
-            recordCounter, indexTimeInSecs,
-            ((double) recordCounter / indexTimeInSecs));
+//    time_t cIndexStartTime;
+//    cIndexStartTime = time(NULL);
+//    createIndex(db, *pLayout, pLayout->fieldList[0].name);
+//    long indexTimeInSecs = time(NULL) - cIndexStartTime;
+//    printf("Indexed %ld records in %ld seconds with %.2f opts/sec \n",
+//            recordCounter, indexTimeInSecs,
+//            ((double) recordCounter / indexTimeInSecs));
 
     rc = sqlite3_exec(db, "PRAGMA journal_mode = DELETE;", NULL, 0, &zErrMsg);
     if (rc != SQLITE_OK) {
