@@ -137,7 +137,7 @@ void printStr(char *str, int start, int len) {
 
 int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
         sqlite3_stmt *sqlStmt) {
-    static char datestring[256];
+    static char datestring[19];
     DelimFileData *pDelimInfo = (DelimFileData *) pInfo;
     //char separator = pDelimInfo->separator;
     char separator = layout.separator;
@@ -166,7 +166,7 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
         int len = -1;
 
         ch = 0;
-        if (field.type == 'S' || field.type == 'D') {
+        if (field.type == 'S' || field.type == 'D' || field.type == 'T') {
             // cout<<"index="<<index<<" endOffset="<<field.endOffSet<<endl;
             for (int t = index; t < field.endOffSet; t++) {
                 ch = *(lineStr + t);
@@ -208,7 +208,7 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                         *(lineStr + end) = 0;
                         if (strptime(strToStore, field.format.c_str(),
                                 &tm)!= NULL) {
-                            strftime(datestring, 256, "%Y-%m-%d", &tm);
+                            strftime(datestring, 19, "%Y-%m-%d", &tm);
                             strToStore = datestring;
                             len = 10;
                         }
@@ -217,19 +217,43 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                         struct tm tm;
                         if (strptime(strToStore, field.format.c_str(),
                                 &tm)!= NULL) {
-                            strftime(datestring, 256, "%Y-%m-%d", &tm);
+                            strftime(datestring, 19, "%Y-%m-%d", &tm);
                             strToStore = datestring;
                             len = 10;
                         }
                     }
                 }
+
+                if (field.type == 'T') {
+                    if (end < lineStrLen) {
+                        struct tm tm;
+                        char tch = *(lineStr + end);
+                        *(lineStr + end) = 0;
+                        if (strptime(strToStore, field.format.c_str(),
+                                &tm)!= NULL) {
+                            strftime(datestring, 19, "%Y-%m-%dT%H:%M:%S", &tm);
+                            strToStore = datestring;
+                            len = 19;
+                        }
+                        *(lineStr + end) = tch;
+                    } else {
+                        struct tm tm;
+                        if (strptime(strToStore, field.format.c_str(),
+                                &tm)!= NULL) {
+                            strftime(datestring, 19, "%Y-%m-%dT%H:%M:%S", &tm);
+                            strToStore = datestring;
+                            len = 19;
+                        }
+                    }
+                }
+
                 // Found something to bind
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
                 sqlite3_bind_text(sqlStmt, fieldCounter + 1, strToStore, len, SQLITE_TRANSIENT);
 #    else
-                rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1,
-                        strToStore, len, SQLITE_TRANSIENT);
+                rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1, strToStore,
+                        len, SQLITE_TRANSIENT);
                 if (rc != SQLITE_OK) {
                     fprintf(stderr, "SQL error %d: text binding failed\n", rc);
                     return 1;
@@ -560,11 +584,19 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
 
         if (strcmp(type, "date") == 0) {
             pLayout->fieldList[i].type = 'D';
+        }
+
+        if (strcmp(type, "time") == 0) {
+            pLayout->fieldList[i].type = 'T';
+        }
+
+        if (pLayout->fieldList[i].type == 'D'
+                || pLayout->fieldList[i].type == 'T') {
             cJSON *jsonDateFormat = cJSON_GetObjectItem(jsonField, "format");
             if (jsonDateFormat == NULL) {
                 string e = string("Name: ");
                 e += jsonFieldName->valuestring;
-                e += "\nDate format cannot be empty";
+                e += "\nFormat cannot be empty";
                 throw e;
             }
             pLayout->fieldList[i].format = jsonDateFormat->valuestring;
@@ -738,24 +770,43 @@ int createIndex(sqlite3 *db, const Layout& layout, string indexOnFieldName) {
 string getCSVLayoutHelpExample() {
     return "\nExample of csv layout:"
             "\n{"
-            "\n  \"fieldList\": ["
-            "\n  {"
-            "\n    \"name\": \"record_id\","
-            "\n    \"type\": \"integer\","
-            "\n    \"length\": 10"
-            "\n    },"
-            "\n{";
-//            "name": "name",
-//            "length": 10
-//        },
-//        {
-//            "name": "balance",
-//            "type": "real",
-//            "length": 10
-//        }
-//    ]
-//}layout:\n");
-
+            "\n    \"name\" : \"in\","
+            "\n    \"type\" : \"csv\","
+            "\n    \"separator\" : \"   \","
+            "\n    \"fieldList\": ["
+            "\n        {"
+            "\n            \"name\": \"record_id\","
+            "\n            \"type\": \"integer\""
+            "\n        },"
+            "\n        {"
+            "\n            \"name\": \"name\""
+            "\n        },"
+            "\n        {"
+            "\n            \"name\": \"balance\","
+            "\n            \"type\": \"real\""
+            "\n        },"
+            "\n        {"
+            "\n            \"name\": \"date1\","
+            "\n            \"type\": \"date\","
+            "\n            \"format\": \"%m%d%Y\""
+            "\n        },"
+            "\n        {"
+            "\n            \"name\": \"date2\","
+            "\n            \"type\": \"date\","
+            "\n            \"format\": \"%Y-%m-%d\""
+            "\n        },"
+            "\n        {"
+            "\n            \"name\": \"time1\","
+            "\n            \"type\": \"time\","
+            "\n            \"format\": \"%Y-%m-%dT%H:%M:%S\""
+            "\n        },"
+            "\n        {"
+            "\n            \"name\": \"time2\","
+            "\n            \"type\": \"time\","
+            "\n            \"format\": \"%d/%m/%Y-%H-%M-%S\""
+            "\n        }"
+            "\n    ]"
+            "\n}";
 }
 
 string getLayoutHelp() {
@@ -767,16 +818,21 @@ string getLayoutHelp() {
             "\n Layout Definition Parameters:"
             "\n   name      : Layout name that will be used as table name. Can also be passed as an argument to utility."
             "\n               Example: book_info"
-            "\n   type      : csv/flat. 'csv' for delimited file and 'flat' for flat files"
+//            "\n   type      : csv/flat. 'csv' for delimited file and 'flat' for flat files"
+            "\n   type      : csv. 'csv' for delimited file"
             "\n               Example: csv"
             "\n   separator : Separator used for file. Only valid for csv files."
             "\n Layout Field Definition Parameters:"
             "\n   name   : Field name. It will become the column name in db"
             "\n            Example: balance"
-            "\n   type   : text/integer/real. 'text' text field like \"hello\". 'integer' for integers like 10. 'real' for decimals like 5.6"
+            "\n   type   : text/integer/real/date/time. 'text' text field like \"hello\". 'integer' for integers like 10. 'real' for decimals like 5.6"
             "\n            Example: real"
-            "\n   length : Any integer number. Length for a given field. Only valid for flat files"
-            "\n            Example: 7";
+            "\n   foramt : If type is date/time then we need to provide this. Use date format from \n   http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html"
+            "\n            Example: %m%d%Y for 11022014 which is 2014-02-11"
+            "\n            Example: %d/%m/%Y-%H-%M-%S for 02/11/2014-21-56-53 which is 2014-02-11T21:56:53"
+//            "\n   length : Any integer number. Length for a given field. Only valid for flat files"
+//            "\n            Example: 7"
+            "\n";
 }
 
 OptionParser createParser() {
