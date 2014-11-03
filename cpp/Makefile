@@ -6,7 +6,7 @@ RM=rm
 ECHO=echo
 MKDIR=mkdir
 
-EXE=bin/flscpp
+EXE=bin/sqliteloader
 #SRCS=$(SRC_DIR)/main.cpp
 SRCS=$(SRC_DIR)/main.cpp
 SRCS+=$(SRC_DIR)/OptionParser.cpp
