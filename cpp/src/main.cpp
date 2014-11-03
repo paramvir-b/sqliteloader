@@ -10,6 +10,7 @@
 #include <fstream>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "sqlite3.h"
 #ifndef DISABLE_SQL_CODE
@@ -73,15 +74,16 @@ struct Field {
     string name;
     char type;
     int length;
+    string format;
     int endOffSet;
     Field() :
-            type('T'), length(0), endOffSet(0) {
+            type('S'), length(0), format(""), endOffSet(0) {
     }
 
     friend ostream& operator<<(ostream &outStream, Field &field) {
         cout << "[ name=" << field.name << ", type=" << field.type
-                << ", length=" << field.length << ", endOffSet="
-                << field.endOffSet << " ]";
+                << ", length=" << field.length << ", format=" << field.format
+                << ", endOffSet=" << field.endOffSet << " ]";
         return outStream;
     }
 };
@@ -133,8 +135,9 @@ void printStr(char *str, int start, int len) {
     cout << "'" << endl;
 }
 
-int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr,
+int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
         sqlite3_stmt *sqlStmt) {
+    static char datestring[256];
     DelimFileData *pDelimInfo = (DelimFileData *) pInfo;
     //char separator = pDelimInfo->separator;
     char separator = layout.separator;
@@ -163,7 +166,7 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr,
         int len = -1;
 
         ch = 0;
-        if (field.type == 'T') {
+        if (field.type == 'S' || field.type == 'D') {
             // cout<<"index="<<index<<" endOffset="<<field.endOffSet<<endl;
             for (int t = index; t < field.endOffSet; t++) {
                 ch = *(lineStr + t);
@@ -197,13 +200,36 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr,
                 if (end == -1)
                     end = field.endOffSet;
                 len = end - start;
+                char * strToStore = lineStr + start;
+                if (field.type == 'D') {
+                    if (end < lineStrLen) {
+                        struct tm tm;
+                        char tch = *(lineStr + end);
+                        *(lineStr + end) = 0;
+                        if (strptime(strToStore, field.format.c_str(),
+                                &tm)!= NULL) {
+                            strftime(datestring, 256, "%Y-%m-%d", &tm);
+                            strToStore = datestring;
+                            len = 10;
+                        }
+                        *(lineStr + end) = tch;
+                    } else {
+                        struct tm tm;
+                        if (strptime(strToStore, field.format.c_str(),
+                                &tm)!= NULL) {
+                            strftime(datestring, 256, "%Y-%m-%d", &tm);
+                            strToStore = datestring;
+                            len = 10;
+                        }
+                    }
+                }
                 // Found something to bind
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
-                sqlite3_bind_text(sqlStmt, fieldCounter + 1, lineStr + start, len, SQLITE_TRANSIENT);
+                sqlite3_bind_text(sqlStmt, fieldCounter + 1, strToStore, len, SQLITE_TRANSIENT);
 #    else
                 rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1,
-                        lineStr + start, len, SQLITE_TRANSIENT);
+                        strToStore, len, SQLITE_TRANSIENT);
                 if (rc != SQLITE_OK) {
                     fprintf(stderr, "SQL error %d: text binding failed\n", rc);
                     return 1;
@@ -315,7 +341,7 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
         int len = -1;
         int ch = 0;
 
-        if (field.type == 'T') {
+        if (field.type == 'S') {
             // cout<<"index="<<index<<" endOffset="<<field.endOffSet<<endl;
             for (int t = index; t < field.endOffSet; t++) {
                 ch = *(lineStr + t);
@@ -424,7 +450,7 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
 }
 
 Layout * parseLayout(string layoutFileName, string argTableName) {
-    // parsing json
+// parsing json
     string json_str = get_file_contents(layoutFileName);
 
     if (layoutFileName.length() <= 0) {
@@ -450,14 +476,14 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
      */
     cJSON *fieldList = cJSON_GetObjectItem(root, "fieldList");
 
-    // building create table query
-    // TODO  extract table name from file name or something
+// building create table query
+// TODO  extract table name from file name or something
     int recordLen = 0;
     int fieldCounter = 0;
     int fieldListCount = cJSON_GetArraySize(fieldList);
 
-    // TODO If we need to give default name. In future may be
-    // string tableName = "t";
+// TODO If we need to give default name. In future may be
+// string tableName = "t";
     string tableName;
 
     cJSON *jLayoutName = cJSON_GetObjectItem(root, "name");
@@ -521,7 +547,7 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
             type = cJSON_GetObjectItem(jsonField, "type")->valuestring;
 
         if (strcmp(type, "text") == 0) {
-            pLayout->fieldList[i].type = 'T';
+            pLayout->fieldList[i].type = 'S';
         }
 
         if (strcmp(type, "integer") == 0) {
@@ -530,6 +556,18 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
 
         if (strcmp(type, "real") == 0) {
             pLayout->fieldList[i].type = 'R';
+        }
+
+        if (strcmp(type, "date") == 0) {
+            pLayout->fieldList[i].type = 'D';
+            cJSON *jsonDateFormat = cJSON_GetObjectItem(jsonField, "format");
+            if (jsonDateFormat == NULL) {
+                string e = string("Name: ");
+                e += jsonFieldName->valuestring;
+                e += "\nDate format cannot be empty";
+                throw e;
+            }
+            pLayout->fieldList[i].format = jsonDateFormat->valuestring;
         }
 
         fieldCounter++;
@@ -541,7 +579,7 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
 }
 
 string getCreateTableQuery(Layout& layout) {
-    // building create table query
+// building create table query
     int recordLen = 0;
     int fieldCounter = 0;
 
@@ -551,7 +589,8 @@ string getCreateTableQuery(Layout& layout) {
     for (int i = 0; i < layout.fieldListLen; i++) {
         createTableQry += layout.fieldList[i].name;
 
-        if (layout.fieldList[i].type == 'T') {
+        if (layout.fieldList[i].type == 'S' || layout.fieldList[i].type == 'D'
+                || layout.fieldList[i].type == 'T') {
             createTableQry += " TEXT";
         }
 
@@ -580,7 +619,7 @@ string getCreateTableQuery(Layout& layout) {
 }
 
 string getInsertQuery(Layout& layout) {
-    // building insert table query
+// building insert table query
     int recordLen = 0;
     int fieldCounter = 0;
 
@@ -706,16 +745,16 @@ string getCSVLayoutHelpExample() {
             "\n    \"length\": 10"
             "\n    },"
             "\n{";
-    //            "name": "name",
-    //            "length": 10
-    //        },
-    //        {
-    //            "name": "balance",
-    //            "type": "real",
-    //            "length": 10
-    //        }
-    //    ]
-    //}layout:\n");
+//            "name": "name",
+//            "length": 10
+//        },
+//        {
+//            "name": "balance",
+//            "type": "real",
+//            "length": 10
+//        }
+//    ]
+//}layout:\n");
 
 }
 
@@ -842,7 +881,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    //remove(dbFileName.c_str());
+//remove(dbFileName.c_str());
 
 #ifndef DISABLE_SQL_CODE
     int rc;
@@ -891,7 +930,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // TODO COMMENTING OUT WAL MODE
+// TODO COMMENTING OUT WAL MODE
 //    rc = sqlite3_exec(db, "PRAGMA journal_mode = WAL;", NULL, 0, &zErrMsg);
 //    if (rc != SQLITE_OK) {
 //        fprintf(stderr, "SQL error: %s\n", zErrMsg);
@@ -939,7 +978,7 @@ int main(int argc, char **argv) {
         lineStr = (char *) line.c_str();
         // cout<<lineStr<<endl;
         //parseFixedLenRecord(layout, lineStr, sqlStmt);
-        parseDelimRecord(*pLayout, NULL, lineStr, sqlStmt);
+        parseDelimRecord(*pLayout, NULL, lineStr, line.length(), sqlStmt);
 
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
@@ -996,7 +1035,7 @@ int main(int argc, char **argv) {
     sqlite3_close(db);
 #endif
     long timeInSecs = time(NULL) - cStartTime;
-    // printf("Imported %ld records in %4.2f seconds with %.2f opts/sec \n", recordCounter, timeInSecs, recordCounter/timeInSecs);
+// printf("Imported %ld records in %4.2f seconds with %.2f opts/sec \n", recordCounter, timeInSecs, recordCounter/timeInSecs);
     printf("Imported %ld records in %ld seconds with %.2f opts/sec \n",
             recordCounter, timeInSecs, ((double) recordCounter / timeInSecs));
     printf("DB file is at: %s\n", dbFileName.c_str());

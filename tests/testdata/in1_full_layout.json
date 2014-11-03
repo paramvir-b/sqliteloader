@@ -13,6 +13,16 @@
         {
             "name": "balance",
             "type": "real"
+        },
+        {
+            "name": "date1",
+            "type": "date",
+            "format": "%m%d%Y"
+        },
+        {
+            "name": "date2",
+            "type": "date",
+            "format": "%Y-%m-%d"
         }
     ]
 }
