@@ -762,9 +762,8 @@ int createIndex(sqlite3 *db, const Layout& layout, string indexOnFieldName) {
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
     }
-
-    return 0;
 #endif
+    return 0;
 }
 
 string getCSVLayoutHelpExample() {
