@@ -1080,12 +1080,12 @@ int main(int argc, char **argv) {
 //            recordCounter, indexTimeInSecs,
 //            ((double) recordCounter / indexTimeInSecs));
 
-    rc = sqlite3_exec(db, "PRAGMA journal_mode = DELETE;", NULL, 0, &zErrMsg);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
-        return 1;
-    }
+//    rc = sqlite3_exec(db, "PRAGMA journal_mode = DELETE;", NULL, 0, &zErrMsg);
+//    if (rc != SQLITE_OK) {
+//        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+//        sqlite3_free(zErrMsg);
+//        return 1;
+//    }
 
     sqlite3_close(db);
 #endif
