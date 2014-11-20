@@ -75,15 +75,17 @@ struct Field {
     char type;
     int length;
     string format;
+    int pivotYear;
     int endOffSet;
     Field() :
-            type('S'), length(0), format(""), endOffSet(0) {
+            type('S'), length(0), format(""), pivotYear(-1), endOffSet(0) {
     }
 
     friend ostream& operator<<(ostream &outStream, Field &field) {
         cout << "[ name=" << field.name << ", type=" << field.type
                 << ", length=" << field.length << ", format=" << field.format
-                << ", endOffSet=" << field.endOffSet << " ]";
+                << ", pivotYear=" << field.pivotYear << ", endOffSet="
+                << field.endOffSet << " ]";
         return outStream;
     }
 };
@@ -135,11 +137,30 @@ void printStr(char *str, int start, int len) {
     cout << "'" << endl;
 }
 
+int getLastTwoDigits(int num) {
+    int d1 = num % 10;
+    int d2 = (num / 10) % 10;
+    return d2 * 10 + d1;
+}
+
+void fixYear(int pivotYear, struct tm *ptm) {
+    int twoDigitYear = getLastTwoDigits(ptm->tm_year + 1900);
+    int startPY = pivotYear - 50;
+
+    cout << "pivotYear=" << pivotYear << " twoDigitYear=" << twoDigitYear
+            << " orgY=" << ptm->tm_year + 1900 << endl;
+    if (twoDigitYear < 50) {
+        ptm->tm_year = pivotYear + twoDigitYear - 1900;
+    } else if (twoDigitYear >= 50) {
+        ptm->tm_year = startPY + (twoDigitYear - 50) - 1900;
+    }
+}
+
 int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
         sqlite3_stmt *sqlStmt) {
     static char datestring[19];
     DelimFileData *pDelimInfo = (DelimFileData *) pInfo;
-    //char separator = pDelimInfo->separator;
+//char separator = pDelimInfo->separator;
     char separator = layout.separator;
 #ifndef DISABLE_SQL_CODE
     int rc;
@@ -207,7 +228,10 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                         char tch = *(lineStr + end);
                         *(lineStr + end) = 0;
                         if (strptime(strToStore, field.format.c_str(),
-                                &tm)!= NULL) {
+                                &tm) != NULL) {
+                            if (field.pivotYear != -1) {
+                                fixYear(field.pivotYear, &tm);
+                            }
                             strftime(datestring, 19, "%Y-%m-%d", &tm);
                             strToStore = datestring;
                             len = 10;
@@ -216,7 +240,10 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                     } else {
                         struct tm tm;
                         if (strptime(strToStore, field.format.c_str(),
-                                &tm)!= NULL) {
+                                &tm) != NULL) {
+                            if (field.pivotYear != -1) {
+                                fixYear(field.pivotYear, &tm);
+                            }
                             strftime(datestring, 19, "%Y-%m-%d", &tm);
                             strToStore = datestring;
                             len = 10;
@@ -230,7 +257,10 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                         char tch = *(lineStr + end);
                         *(lineStr + end) = 0;
                         if (strptime(strToStore, field.format.c_str(),
-                                &tm)!= NULL) {
+                                &tm) != NULL) {
+                            if (field.pivotYear != -1) {
+                                fixYear(field.pivotYear, &tm);
+                            }
                             strftime(datestring, 19, "%Y-%m-%dT%H:%M:%S", &tm);
                             strToStore = datestring;
                             len = 19;
@@ -239,7 +269,10 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                     } else {
                         struct tm tm;
                         if (strptime(strToStore, field.format.c_str(),
-                                &tm)!= NULL) {
+                                &tm) != NULL) {
+                            if (field.pivotYear != -1) {
+                                fixYear(field.pivotYear, &tm);
+                            }
                             strftime(datestring, 19, "%Y-%m-%dT%H:%M:%S", &tm);
                             strToStore = datestring;
                             len = 19;
@@ -253,7 +286,8 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                 sqlite3_bind_text(sqlStmt, fieldCounter + 1, strToStore, len, SQLITE_TRANSIENT);
 #    else
                 rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1, strToStore,
-                        len, SQLITE_TRANSIENT);
+                        len,
+                        SQLITE_TRANSIENT);
                 if (rc != SQLITE_OK) {
                     fprintf(stderr, "SQL error %d: text binding failed\n", rc);
                     return 1;
@@ -600,6 +634,12 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
                 throw e;
             }
             pLayout->fieldList[i].format = jsonDateFormat->valuestring;
+
+            cJSON *jsonPivotYear = cJSON_GetObjectItem(jsonField, "pivotYear");
+            if (jsonPivotYear != NULL) {
+                pLayout->fieldList[i].pivotYear = jsonPivotYear->valueint;
+            }
+
         }
 
         fieldCounter++;
@@ -822,13 +862,15 @@ string getLayoutHelp() {
             "\n               Example: csv"
             "\n   separator : Separator used for file. Only valid for csv files."
             "\n Layout Field Definition Parameters:"
-            "\n   name   : Field name. It will become the column name in db"
-            "\n            Example: balance"
-            "\n   type   : text/integer/real/date/time. 'text' text field like \"hello\". 'integer' for integers like 10. 'real' for decimals like 5.6"
-            "\n            Example: real"
-            "\n   foramt : If type is date/time then we need to provide this. Use date format from \n   http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html"
-            "\n            Example: %m%d%Y for 11022014 which is 2014-02-11"
-            "\n            Example: %d/%m/%Y-%H-%M-%S for 02/11/2014-21-56-53 which is 2014-02-11T21:56:53"
+            "\n   name     : Field name. It will become the column name in db"
+            "\n              Example: balance"
+            "\n   type     : text/integer/real/date/time. 'text' text field like \"hello\". 'integer' for integers like 10. 'real' for decimals like 5.6"
+            "\n              Example: real"
+            "\n   format   : If type is date/time then we need to provide this. Use date format from \n   http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html"
+            "\n              Example: %m%d%Y for 11022014 which is 2014-02-11"
+            "\n              Example: %d/%m/%Y-%H-%M-%S for 02/11/2014-21-56-53 which is 2014-02-11T21:56:53"
+            "\n   pivotYear: If type is date/time then we can provide pivot year. Refer to \n   http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormatter.html#withPivotYear(int)"
+            "\n              Example: 2000"
 //            "\n   length : Any integer number. Length for a given field. Only valid for flat files"
 //            "\n            Example: 7"
             "\n";
