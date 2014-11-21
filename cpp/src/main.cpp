@@ -147,8 +147,6 @@ void fixYear(int pivotYear, struct tm *ptm) {
     int twoDigitYear = getLastTwoDigits(ptm->tm_year + 1900);
     int startPY = pivotYear - 50;
 
-    cout << "pivotYear=" << pivotYear << " twoDigitYear=" << twoDigitYear
-            << " orgY=" << ptm->tm_year + 1900 << endl;
     if (twoDigitYear < 50) {
         ptm->tm_year = pivotYear + twoDigitYear - 1900;
     } else if (twoDigitYear >= 50) {
