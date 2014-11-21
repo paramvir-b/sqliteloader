@@ -176,10 +176,12 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
             ti++;
             ch = *(lineStr + ti);
         }
-        for (; ti >= index && (ch = *(lineStr + ti)) == ' '; ti--) {
+
+        for (; ti >= index && (ch = *(lineStr + ti - 1)) == ' '; ti--) {
         }
 
-        field.endOffSet = index + fieldLength;
+//        field.endOffSet = index + fieldLength;
+        field.endOffSet = ti++;
         int start = -1;
         int end = -1;
         int len = -1;
