@@ -33,6 +33,12 @@
             "name": "time2",
             "type": "time",
             "format": "%d/%m/%Y-%H-%M-%S"
+        },
+        {
+            "name": "date3",
+            "type": "date",
+            "format": "%y%m",
+            "pivotYear" : 2000
         }
     ]
 }
