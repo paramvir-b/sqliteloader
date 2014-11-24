@@ -656,8 +656,7 @@ string getCreateTableQuery(Layout& layout) {
     int fieldCounter = 0;
 
     string createTableQry;
-    createTableQry = "CREATE TABLE '" + layout.name
-            + "' ( id INTEGER PRIMARY KEY, ";
+    createTableQry = "CREATE TABLE '" + layout.name + "' ( ";
     for (int i = 0; i < layout.fieldListLen; i++) {
         createTableQry += layout.fieldList[i].name;
 
@@ -696,7 +695,7 @@ string getInsertQuery(Layout& layout) {
     int fieldCounter = 0;
 
     string insertBindQry;
-    insertBindQry = "INSERT INTO '" + layout.name + "' VALUES ( NULL, ";
+    insertBindQry = "INSERT INTO '" + layout.name + "' VALUES ( ";
     for (int i = 0; i < layout.fieldListLen; i++) {
 
         insertBindQry += "?";
