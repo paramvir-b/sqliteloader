@@ -831,6 +831,8 @@ string getLayoutHelp() {
             "\n              Example: %d/%m/%Y-%H-%M-%S for 02/11/2014-21-56-53 which is 2014-02-11T21:56:53"
             "\n   pivotYear: If type is date/time then we can provide pivot year. Refer to \n   http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormatter.html#withPivotYear(int)"
             "\n              Example: 2000"
+            "\n   missingValue: If this is the value then it will be replaced with null in db"
+            "\n              Example: 2000"
 //            "\n   length : Any integer number. Length for a given field. Only valid for flat files"
 //            "\n            Example: 7"
             "\n";
