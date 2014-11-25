@@ -76,15 +76,19 @@ struct Field {
     int length;
     string format;
     int pivotYear;
+    string *missingValue;
     int endOffSet;
     Field() :
-            type('S'), length(0), format(""), pivotYear(-1), endOffSet(0) {
+            type('S'), length(0), format(""), pivotYear(-1), missingValue(NULL), endOffSet(
+                    0) {
     }
 
     friend ostream& operator<<(ostream &outStream, Field &field) {
         cout << "[ name=" << field.name << ", type=" << field.type
                 << ", length=" << field.length << ", format=" << field.format
-                << ", pivotYear=" << field.pivotYear << ", endOffSet="
+                << ", pivotYear=" << field.pivotYear << ", missingValue="
+                << (field.missingValue == NULL ?
+                        "NULL" : field.missingValue->c_str()) << ", endOffSet="
                 << field.endOffSet << " ]";
         return outStream;
     }
@@ -203,6 +207,10 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
 //        cout << "value='" << fieldStart + nonSpaceStartIndex << "' after"
 //                << endl;
 
+        if (field.missingValue != NULL
+                && strcmp(fieldStart, field.missingValue->c_str()) == 0) {
+            nonSpaceStartIndex = -1;
+        }
         if (nonSpaceStartIndex == -1) {
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
@@ -523,6 +531,13 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
         cJSON *jsonFieldName = cJSON_GetObjectItem(jsonField, "name");
         if (jsonFieldName == NULL) {
             throw "Name cannot be empty";
+        }
+
+        cJSON *jsonMissingValue = cJSON_GetObjectItem(jsonField,
+                "missingValue");
+        if (jsonMissingValue != NULL) {
+            pLayout->fieldList[i].missingValue = new string(
+                    jsonMissingValue->valuestring);
         }
 
         if (pLayout->type == 'F') {
