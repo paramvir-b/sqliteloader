@@ -163,131 +163,101 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
 #ifndef DISABLE_SQL_CODE
     int rc;
 #endif
-    int index = 0;
+    struct tm tm;
+
+    int indexInLine = 0;
     int fieldListCount = layout.fieldListLen;
     for (int fieldCounter = 0; fieldCounter < fieldListCount; fieldCounter++) {
         Field &field = layout.fieldList[fieldCounter];
+        char *fieldStart = lineStr + indexInLine;
         int fieldLength = 0;
-        int ti = index;
+        int ti = 0;
+        int nonSpaceStartIndex = -1;
+        int nonSpaceEndIndex = -1;
         int ch = 0;
-        ch = *(lineStr + index);
-        while (!(ch == separator || ch == 0 || ch == '\n' || ch == '\r')) {
+        ch = *fieldStart;
+        while (!(ch == separator || ch == 0)) {
+            if (ch != ' ' && nonSpaceStartIndex == -1) {
+                nonSpaceStartIndex = ti;
+            }
             fieldLength++;
             ti++;
-            ch = *(lineStr + ti);
-        }
-
-        for (; ti >= index && (ch = *(lineStr + ti - 1)) == ' '; ti--) {
-        }
-
-//        field.endOffSet = index + fieldLength;
-        field.endOffSet = ti++;
-        int start = -1;
-        int end = -1;
-        int len = -1;
-
-        ch = 0;
-        if (field.type == 'S' || field.type == 'D' || field.type == 'T') {
-            // cout<<"index="<<index<<" endOffset="<<field.endOffSet<<endl;
-            for (int t = index; t < field.endOffSet; t++) {
-                ch = *(lineStr + t);
-                // cout<<"char="<<*(lineStr + t)<<endl;
-                if (start == -1 && ch != ' ' && ch != '\n' && ch != '\r') {
-                    start = t;
-                    // cout<<"setting start="<<start<<endl;
-                } else if (start > -1 && end == -1
-                        && (ch == '\n' || ch == '\r')) {
-                    end = t;
-                    // cout<<"setting end="<<end<<endl;
-                }
+            ch = *(fieldStart + ti);
+            if (ch == separator) {
+                *(fieldStart + ti) = 0;
             }
+        }
 
-            // cout<<"out start="<<start<<" end="<<end<<endl;
-            if (start == -1 && end == -1) {
-                // empty put NULL
+        for (; ti >= 0 && (ch = *(fieldStart + ti - 1)) == ' '; ti--) {
+        }
+
+        nonSpaceEndIndex = ti;
+
+//        cout << field << endl;
+//        cout << "value='" << fieldStart << "'" << endl;
+//        cout << "nonSpaceStartIndex=" << nonSpaceStartIndex
+//                << " nonSpaceEndIndex=" << nonSpaceEndIndex << endl;
+//        cout << "fieldLength=" << fieldLength << endl;
+//
+////        *(fieldStart + nonSpaceEndIndex) = 0;
+//        cout << "value='" << fieldStart + nonSpaceStartIndex << "' after"
+//                << endl;
+
+        if (nonSpaceStartIndex == -1) {
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
-                sqlite3_bind_null(sqlStmt, fieldCounter + 1);
+            sqlite3_bind_null(sqlStmt, fieldCounter + 1);
 #    else
-                rc = sqlite3_bind_null(sqlStmt, fieldCounter + 1);
-                if (rc != SQLITE_OK) {
-                    fprintf(stderr, "SQL error %d: text null binding failed\n",
-                            rc);
-                    return 1;
-                }
+            rc = sqlite3_bind_null(sqlStmt, fieldCounter + 1);
+            if (rc != SQLITE_OK) {
+                fprintf(stderr, "SQL error %d: text null binding failed\n", rc);
+                return 1;
+            }
 #    endif
 #endif
-            } else if (start > -1) {
-                if (end == -1)
-                    end = field.endOffSet;
-                len = end - start;
-                char * strToStore = lineStr + start;
-                if (field.type == 'D') {
-                    if (end < lineStrLen) {
-                        struct tm tm;
-                        char tch = *(lineStr + end);
-                        *(lineStr + end) = 0;
-                        if (strptime(strToStore, field.format.c_str(),
-                                &tm) != NULL) {
-                            if (field.pivotYear != -1) {
-                                fixYear(field.pivotYear, &tm);
-                            }
-                            strftime(datestring, 19, "%Y-%m-%d", &tm);
-                            strToStore = datestring;
-                            len = 10;
-                        }
-                        *(lineStr + end) = tch;
-                    } else {
-                        struct tm tm;
-                        if (strptime(strToStore, field.format.c_str(),
-                                &tm) != NULL) {
-                            if (field.pivotYear != -1) {
-                                fixYear(field.pivotYear, &tm);
-                            }
-                            strftime(datestring, 19, "%Y-%m-%d", &tm);
-                            strToStore = datestring;
-                            len = 10;
-                        }
-                    }
-                }
+            indexInLine += fieldLength + 1;
+            continue;
+        }
 
-                if (field.type == 'T') {
-                    if (end < lineStrLen) {
-                        struct tm tm;
-                        char tch = *(lineStr + end);
-                        *(lineStr + end) = 0;
-                        if (strptime(strToStore, field.format.c_str(),
-                                &tm) != NULL) {
-                            if (field.pivotYear != -1) {
-                                fixYear(field.pivotYear, &tm);
-                            }
-                            strftime(datestring, 19, "%Y-%m-%dT%H:%M:%S", &tm);
-                            strToStore = datestring;
-                            len = 19;
-                        }
-                        *(lineStr + end) = tch;
-                    } else {
-                        struct tm tm;
-                        if (strptime(strToStore, field.format.c_str(),
-                                &tm) != NULL) {
-                            if (field.pivotYear != -1) {
-                                fixYear(field.pivotYear, &tm);
-                            }
-                            strftime(datestring, 19, "%Y-%m-%dT%H:%M:%S", &tm);
-                            strToStore = datestring;
-                            len = 19;
-                        }
-                    }
-                }
-
-                // Found something to bind
+        if (field.type == 'S' || field.type == 'I' || field.type == 'R') {
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
-                sqlite3_bind_text(sqlStmt, fieldCounter + 1, strToStore, len, SQLITE_TRANSIENT);
+            sqlite3_bind_text(sqlStmt, fieldCounter + 1,
+                    fieldStart + nonSpaceStartIndex,
+                    nonSpaceEndIndex - nonSpaceStartIndex,
+                    SQLITE_TRANSIENT);
 #    else
-                rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1, strToStore,
-                        len,
+            rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1,
+                    fieldStart + nonSpaceStartIndex,
+                    nonSpaceEndIndex - nonSpaceStartIndex,
+                    SQLITE_TRANSIENT);
+            if (rc != SQLITE_OK) {
+                fprintf(stderr, "SQL error %d: text binding failed\n", rc);
+                return 1;
+            }
+#    endif
+#endif
+            indexInLine += fieldLength + 1;
+            continue;
+        }
+
+        if (field.type == 'D') {
+            if (strptime(fieldStart, field.format.c_str(), &tm) != NULL) {
+                if (field.pivotYear != -1) {
+                    fixYear(field.pivotYear, &tm);
+                }
+                strftime(datestring, 19, "%Y-%m-%d", &tm);
+#ifndef DISABLE_SQL_CODE
+#    ifndef ENABLE_SQL_CHECKS
+                sqlite3_bind_text(sqlStmt, fieldCounter + 1,
+                        datestring,
+                        10,
                         SQLITE_TRANSIENT);
+#    else
+                rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1, datestring,
+                        10,
+                        SQLITE_TRANSIENT);
+
                 if (rc != SQLITE_OK) {
                     fprintf(stderr, "SQL error %d: text binding failed\n", rc);
                     return 1;
@@ -295,52 +265,27 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
 #    endif
 #endif
             }
-            // cout<<"start="<<start<<" end="<<end<<" len="<<len<<endl;
-            // printStr(lineStr, start, len);
-        } else if (field.type == 'I' || field.type == 'R') {
-            for (int t = index; t < field.endOffSet; t++) {
-                ch = *(lineStr + t);
-                // cout<<"char="<<*(lineStr + t)<<endl;
-                if (start == -1 && ch != ' ' && ch != '\n' && ch != '\r'
-                        && (ch == '-' || (ch > '0' && ch <= '9'))) {
-                    start = t;
-                    // cout<<"setting start="<<start<<endl;
-                } else if (start > -1 && end == -1
-                        && (ch == '\n' || ch == '\r')) {
-                    end = t;
-                    // cout<<"setting end="<<end<<endl;
+            indexInLine += fieldLength + 1;
+            continue;
+        }
+
+        if (field.type == 'T') {
+            if (strptime(fieldStart, field.format.c_str(), &tm) != NULL) {
+                if (field.pivotYear != -1) {
+                    fixYear(field.pivotYear, &tm);
                 }
-            }
-            // cout<<"out start="<<start<<" end="<<end<<endl;
-            if (start == -1 && end == -1) {
-                // empty put NULL
-                // cout<<"empty num"<<endl;
+                strftime(datestring, 19, "%Y-%m-%dT%H:%M:%S", &tm);
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
-                sqlite3_bind_null(sqlStmt, fieldCounter + 1);
+                sqlite3_bind_text(sqlStmt, fieldCounter + 1,
+                        datestring,
+                        19,
+                        SQLITE_TRANSIENT);
 #    else
-                rc = sqlite3_bind_null(sqlStmt, fieldCounter + 1);
-                if (rc != SQLITE_OK) {
-                    fprintf(stderr, "SQL error %d: text null binding failed\n",
-                            rc);
-                    return 1;
-                }
-#    endif
-#endif
-            } else if (start > -1) {
-                if (end == -1)
-                    end = field.endOffSet;
-                // Found something to bind
-                len = end - start;
-#ifndef DISABLE_SQL_CODE
-                // We are doing text binding as Sqlite can do the conversion based on the
-                // infinity we specified in the schema. Also it does that without any loss to
-                // real numbers
-#    ifndef ENABLE_SQL_CHECKS
-                sqlite3_bind_text(sqlStmt, fieldCounter + 1, lineStr + start, len, SQLITE_TRANSIENT);
-#    else
-                rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1,
-                        lineStr + start, len, SQLITE_TRANSIENT);
+                rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1, datestring,
+                        19,
+                        SQLITE_TRANSIENT);
+
                 if (rc != SQLITE_OK) {
                     fprintf(stderr, "SQL error %d: text binding failed\n", rc);
                     return 1;
@@ -349,7 +294,8 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
 #endif
             }
         }
-        index += fieldLength + 1;
+
+        indexInLine += fieldLength + 1;
     }
     return 0;
 //   return pData;
@@ -650,7 +596,7 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
     return pLayout;
 }
 
-string getCreateTableQuery(Layout& layout) {
+string getCreateTableQuery(Layout & layout) {
 // building create table query
     int recordLen = 0;
     int fieldCounter = 0;
@@ -689,7 +635,7 @@ string getCreateTableQuery(Layout& layout) {
     return createTableQry;
 }
 
-string getInsertQuery(Layout& layout) {
+string getInsertQuery(Layout & layout) {
 // building insert table query
     int recordLen = 0;
     int fieldCounter = 0;
