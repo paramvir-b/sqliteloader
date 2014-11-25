@@ -1,0 +1,1567 @@
+{
+  "name": "inl",
+  "type": "csv",
+  "separator": "",
+  "fieldList": [
+    {
+      "name": "rid11",
+      "type": "integer"
+    },
+    {
+      "name": "rid21",
+      "type": "integer"
+    },
+    {
+      "name": "rid31",
+      "type": "integer"
+    },
+    {
+      "name": "rid41",
+      "type": "integer"
+    },
+    {
+      "name": "rid51",
+      "type": "integer"
+    },
+    {
+      "name": "rid61",
+      "type": "integer"
+    },
+    {
+      "name": "rid71",
+      "type": "integer"
+    },
+    {
+      "name": "rid81",
+      "type": "integer"
+    },
+    {
+      "name": "name11"
+    },
+    {
+      "name": "name21"
+    },
+    {
+      "name": "name31"
+    },
+    {
+      "name": "name41"
+    },
+    {
+      "name": "name51"
+    },
+    {
+      "name": "name61"
+    },
+    {
+      "name": "name71"
+    },
+    {
+      "name": "name81"
+    },
+    {
+      "name": "balance11",
+      "type": "real"
+    },
+    {
+      "name": "balance21",
+      "type": "real"
+    },
+    {
+      "name": "balance31",
+      "type": "real"
+    },
+    {
+      "name": "balance41",
+      "type": "real"
+    },
+    {
+      "name": "balance51",
+      "type": "real"
+    },
+    {
+      "name": "balance61",
+      "type": "real"
+    },
+    {
+      "name": "balance71",
+      "type": "real"
+    },
+    {
+      "name": "balance81",
+      "type": "real"
+    },
+    {
+      "name": "date11",
+      "type": "date",
+      "format": "%m%d%Y"
+    },
+    {
+      "name": "date21",
+      "type": "date",
+      "format": "%Y-%m-%d"
+    },
+    {
+      "name": "time11",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time21",
+      "type": "time",
+      "format": "%d/%m/%Y-%H-%M-%S"
+    },
+    {
+      "name": "date31",
+      "type": "date",
+      "format": "%y%m"
+    },
+    {
+      "name": "date41",
+      "type": "date",
+      "format": "%y%m",
+      "pivotYear": 2000
+    },
+    {
+      "name": "time31",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time41",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S",
+      "pivotYear": 2000
+    },
+    {
+      "name": "rid12",
+      "type": "integer"
+    },
+    {
+      "name": "rid22",
+      "type": "integer"
+    },
+    {
+      "name": "rid32",
+      "type": "integer"
+    },
+    {
+      "name": "rid42",
+      "type": "integer"
+    },
+    {
+      "name": "rid52",
+      "type": "integer"
+    },
+    {
+      "name": "rid62",
+      "type": "integer"
+    },
+    {
+      "name": "rid72",
+      "type": "integer"
+    },
+    {
+      "name": "rid82",
+      "type": "integer"
+    },
+    {
+      "name": "name12"
+    },
+    {
+      "name": "name22"
+    },
+    {
+      "name": "name32"
+    },
+    {
+      "name": "name42"
+    },
+    {
+      "name": "name52"
+    },
+    {
+      "name": "name62"
+    },
+    {
+      "name": "name72"
+    },
+    {
+      "name": "name82"
+    },
+    {
+      "name": "balance12",
+      "type": "real"
+    },
+    {
+      "name": "balance22",
+      "type": "real"
+    },
+    {
+      "name": "balance32",
+      "type": "real"
+    },
+    {
+      "name": "balance42",
+      "type": "real"
+    },
+    {
+      "name": "balance52",
+      "type": "real"
+    },
+    {
+      "name": "balance62",
+      "type": "real"
+    },
+    {
+      "name": "balance72",
+      "type": "real"
+    },
+    {
+      "name": "balance82",
+      "type": "real"
+    },
+    {
+      "name": "date12",
+      "type": "date",
+      "format": "%m%d%Y"
+    },
+    {
+      "name": "date22",
+      "type": "date",
+      "format": "%Y-%m-%d"
+    },
+    {
+      "name": "time12",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time22",
+      "type": "time",
+      "format": "%d/%m/%Y-%H-%M-%S"
+    },
+    {
+      "name": "date32",
+      "type": "date",
+      "format": "%y%m"
+    },
+    {
+      "name": "date42",
+      "type": "date",
+      "format": "%y%m",
+      "pivotYear": 2000
+    },
+    {
+      "name": "time32",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time42",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S",
+      "pivotYear": 2000
+    },
+    {
+      "name": "rid13",
+      "type": "integer"
+    },
+    {
+      "name": "rid23",
+      "type": "integer"
+    },
+    {
+      "name": "rid33",
+      "type": "integer"
+    },
+    {
+      "name": "rid43",
+      "type": "integer"
+    },
+    {
+      "name": "rid53",
+      "type": "integer"
+    },
+    {
+      "name": "rid63",
+      "type": "integer"
+    },
+    {
+      "name": "rid73",
+      "type": "integer"
+    },
+    {
+      "name": "rid83",
+      "type": "integer"
+    },
+    {
+      "name": "name13"
+    },
+    {
+      "name": "name23"
+    },
+    {
+      "name": "name33"
+    },
+    {
+      "name": "name43"
+    },
+    {
+      "name": "name53"
+    },
+    {
+      "name": "name63"
+    },
+    {
+      "name": "name73"
+    },
+    {
+      "name": "name83"
+    },
+    {
+      "name": "balance13",
+      "type": "real"
+    },
+    {
+      "name": "balance23",
+      "type": "real"
+    },
+    {
+      "name": "balance33",
+      "type": "real"
+    },
+    {
+      "name": "balance43",
+      "type": "real"
+    },
+    {
+      "name": "balance53",
+      "type": "real"
+    },
+    {
+      "name": "balance63",
+      "type": "real"
+    },
+    {
+      "name": "balance73",
+      "type": "real"
+    },
+    {
+      "name": "balance83",
+      "type": "real"
+    },
+    {
+      "name": "date13",
+      "type": "date",
+      "format": "%m%d%Y"
+    },
+    {
+      "name": "date23",
+      "type": "date",
+      "format": "%Y-%m-%d"
+    },
+    {
+      "name": "time13",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time23",
+      "type": "time",
+      "format": "%d/%m/%Y-%H-%M-%S"
+    },
+    {
+      "name": "date33",
+      "type": "date",
+      "format": "%y%m"
+    },
+    {
+      "name": "date43",
+      "type": "date",
+      "format": "%y%m",
+      "pivotYear": 2000
+    },
+    {
+      "name": "time33",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time43",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S",
+      "pivotYear": 2000
+    },
+    {
+      "name": "rid14",
+      "type": "integer"
+    },
+    {
+      "name": "rid24",
+      "type": "integer"
+    },
+    {
+      "name": "rid34",
+      "type": "integer"
+    },
+    {
+      "name": "rid44",
+      "type": "integer"
+    },
+    {
+      "name": "rid54",
+      "type": "integer"
+    },
+    {
+      "name": "rid64",
+      "type": "integer"
+    },
+    {
+      "name": "rid74",
+      "type": "integer"
+    },
+    {
+      "name": "rid84",
+      "type": "integer"
+    },
+    {
+      "name": "name14"
+    },
+    {
+      "name": "name24"
+    },
+    {
+      "name": "name34"
+    },
+    {
+      "name": "name44"
+    },
+    {
+      "name": "name54"
+    },
+    {
+      "name": "name64"
+    },
+    {
+      "name": "name74"
+    },
+    {
+      "name": "name84"
+    },
+    {
+      "name": "balance14",
+      "type": "real"
+    },
+    {
+      "name": "balance24",
+      "type": "real"
+    },
+    {
+      "name": "balance34",
+      "type": "real"
+    },
+    {
+      "name": "balance44",
+      "type": "real"
+    },
+    {
+      "name": "balance54",
+      "type": "real"
+    },
+    {
+      "name": "balance64",
+      "type": "real"
+    },
+    {
+      "name": "balance74",
+      "type": "real"
+    },
+    {
+      "name": "balance84",
+      "type": "real"
+    },
+    {
+      "name": "date14",
+      "type": "date",
+      "format": "%m%d%Y"
+    },
+    {
+      "name": "date24",
+      "type": "date",
+      "format": "%Y-%m-%d"
+    },
+    {
+      "name": "time14",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time24",
+      "type": "time",
+      "format": "%d/%m/%Y-%H-%M-%S"
+    },
+    {
+      "name": "date34",
+      "type": "date",
+      "format": "%y%m"
+    },
+    {
+      "name": "date44",
+      "type": "date",
+      "format": "%y%m",
+      "pivotYear": 2000
+    },
+    {
+      "name": "time34",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time44",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S",
+      "pivotYear": 2000
+    },
+    {
+      "name": "rid15",
+      "type": "integer"
+    },
+    {
+      "name": "rid25",
+      "type": "integer"
+    },
+    {
+      "name": "rid35",
+      "type": "integer"
+    },
+    {
+      "name": "rid45",
+      "type": "integer"
+    },
+    {
+      "name": "rid55",
+      "type": "integer"
+    },
+    {
+      "name": "rid65",
+      "type": "integer"
+    },
+    {
+      "name": "rid75",
+      "type": "integer"
+    },
+    {
+      "name": "rid85",
+      "type": "integer"
+    },
+    {
+      "name": "name15"
+    },
+    {
+      "name": "name25"
+    },
+    {
+      "name": "name35"
+    },
+    {
+      "name": "name45"
+    },
+    {
+      "name": "name55"
+    },
+    {
+      "name": "name65"
+    },
+    {
+      "name": "name75"
+    },
+    {
+      "name": "name85"
+    },
+    {
+      "name": "balance15",
+      "type": "real"
+    },
+    {
+      "name": "balance25",
+      "type": "real"
+    },
+    {
+      "name": "balance35",
+      "type": "real"
+    },
+    {
+      "name": "balance45",
+      "type": "real"
+    },
+    {
+      "name": "balance55",
+      "type": "real"
+    },
+    {
+      "name": "balance65",
+      "type": "real"
+    },
+    {
+      "name": "balance75",
+      "type": "real"
+    },
+    {
+      "name": "balance85",
+      "type": "real"
+    },
+    {
+      "name": "date15",
+      "type": "date",
+      "format": "%m%d%Y"
+    },
+    {
+      "name": "date25",
+      "type": "date",
+      "format": "%Y-%m-%d"
+    },
+    {
+      "name": "time15",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time25",
+      "type": "time",
+      "format": "%d/%m/%Y-%H-%M-%S"
+    },
+    {
+      "name": "date35",
+      "type": "date",
+      "format": "%y%m"
+    },
+    {
+      "name": "date45",
+      "type": "date",
+      "format": "%y%m",
+      "pivotYear": 2000
+    },
+    {
+      "name": "time35",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time45",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S",
+      "pivotYear": 2000
+    },
+    {
+      "name": "rid16",
+      "type": "integer"
+    },
+    {
+      "name": "rid26",
+      "type": "integer"
+    },
+    {
+      "name": "rid36",
+      "type": "integer"
+    },
+    {
+      "name": "rid46",
+      "type": "integer"
+    },
+    {
+      "name": "rid56",
+      "type": "integer"
+    },
+    {
+      "name": "rid66",
+      "type": "integer"
+    },
+    {
+      "name": "rid76",
+      "type": "integer"
+    },
+    {
+      "name": "rid86",
+      "type": "integer"
+    },
+    {
+      "name": "name16"
+    },
+    {
+      "name": "name26"
+    },
+    {
+      "name": "name36"
+    },
+    {
+      "name": "name46"
+    },
+    {
+      "name": "name56"
+    },
+    {
+      "name": "name66"
+    },
+    {
+      "name": "name76"
+    },
+    {
+      "name": "name86"
+    },
+    {
+      "name": "balance16",
+      "type": "real"
+    },
+    {
+      "name": "balance26",
+      "type": "real"
+    },
+    {
+      "name": "balance36",
+      "type": "real"
+    },
+    {
+      "name": "balance46",
+      "type": "real"
+    },
+    {
+      "name": "balance56",
+      "type": "real"
+    },
+    {
+      "name": "balance66",
+      "type": "real"
+    },
+    {
+      "name": "balance76",
+      "type": "real"
+    },
+    {
+      "name": "balance86",
+      "type": "real"
+    },
+    {
+      "name": "date16",
+      "type": "date",
+      "format": "%m%d%Y"
+    },
+    {
+      "name": "date26",
+      "type": "date",
+      "format": "%Y-%m-%d"
+    },
+    {
+      "name": "time16",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time26",
+      "type": "time",
+      "format": "%d/%m/%Y-%H-%M-%S"
+    },
+    {
+      "name": "date36",
+      "type": "date",
+      "format": "%y%m"
+    },
+    {
+      "name": "date46",
+      "type": "date",
+      "format": "%y%m",
+      "pivotYear": 2000
+    },
+    {
+      "name": "time36",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time46",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S",
+      "pivotYear": 2000
+    },
+    {
+      "name": "rid17",
+      "type": "integer"
+    },
+    {
+      "name": "rid27",
+      "type": "integer"
+    },
+    {
+      "name": "rid37",
+      "type": "integer"
+    },
+    {
+      "name": "rid47",
+      "type": "integer"
+    },
+    {
+      "name": "rid57",
+      "type": "integer"
+    },
+    {
+      "name": "rid67",
+      "type": "integer"
+    },
+    {
+      "name": "rid77",
+      "type": "integer"
+    },
+    {
+      "name": "rid87",
+      "type": "integer"
+    },
+    {
+      "name": "name17"
+    },
+    {
+      "name": "name27"
+    },
+    {
+      "name": "name37"
+    },
+    {
+      "name": "name47"
+    },
+    {
+      "name": "name57"
+    },
+    {
+      "name": "name67"
+    },
+    {
+      "name": "name77"
+    },
+    {
+      "name": "name87"
+    },
+    {
+      "name": "balance17",
+      "type": "real"
+    },
+    {
+      "name": "balance27",
+      "type": "real"
+    },
+    {
+      "name": "balance37",
+      "type": "real"
+    },
+    {
+      "name": "balance47",
+      "type": "real"
+    },
+    {
+      "name": "balance57",
+      "type": "real"
+    },
+    {
+      "name": "balance67",
+      "type": "real"
+    },
+    {
+      "name": "balance77",
+      "type": "real"
+    },
+    {
+      "name": "balance87",
+      "type": "real"
+    },
+    {
+      "name": "date17",
+      "type": "date",
+      "format": "%m%d%Y"
+    },
+    {
+      "name": "date27",
+      "type": "date",
+      "format": "%Y-%m-%d"
+    },
+    {
+      "name": "time17",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time27",
+      "type": "time",
+      "format": "%d/%m/%Y-%H-%M-%S"
+    },
+    {
+      "name": "date37",
+      "type": "date",
+      "format": "%y%m"
+    },
+    {
+      "name": "date47",
+      "type": "date",
+      "format": "%y%m",
+      "pivotYear": 2000
+    },
+    {
+      "name": "time37",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time47",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S",
+      "pivotYear": 2000
+    },
+    {
+      "name": "rid18",
+      "type": "integer"
+    },
+    {
+      "name": "rid28",
+      "type": "integer"
+    },
+    {
+      "name": "rid38",
+      "type": "integer"
+    },
+    {
+      "name": "rid48",
+      "type": "integer"
+    },
+    {
+      "name": "rid58",
+      "type": "integer"
+    },
+    {
+      "name": "rid68",
+      "type": "integer"
+    },
+    {
+      "name": "rid78",
+      "type": "integer"
+    },
+    {
+      "name": "rid88",
+      "type": "integer"
+    },
+    {
+      "name": "name18"
+    },
+    {
+      "name": "name28"
+    },
+    {
+      "name": "name38"
+    },
+    {
+      "name": "name48"
+    },
+    {
+      "name": "name58"
+    },
+    {
+      "name": "name68"
+    },
+    {
+      "name": "name78"
+    },
+    {
+      "name": "name88"
+    },
+    {
+      "name": "balance18",
+      "type": "real"
+    },
+    {
+      "name": "balance28",
+      "type": "real"
+    },
+    {
+      "name": "balance38",
+      "type": "real"
+    },
+    {
+      "name": "balance48",
+      "type": "real"
+    },
+    {
+      "name": "balance58",
+      "type": "real"
+    },
+    {
+      "name": "balance68",
+      "type": "real"
+    },
+    {
+      "name": "balance78",
+      "type": "real"
+    },
+    {
+      "name": "balance88",
+      "type": "real"
+    },
+    {
+      "name": "date18",
+      "type": "date",
+      "format": "%m%d%Y"
+    },
+    {
+      "name": "date28",
+      "type": "date",
+      "format": "%Y-%m-%d"
+    },
+    {
+      "name": "time18",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time28",
+      "type": "time",
+      "format": "%d/%m/%Y-%H-%M-%S"
+    },
+    {
+      "name": "date38",
+      "type": "date",
+      "format": "%y%m"
+    },
+    {
+      "name": "date48",
+      "type": "date",
+      "format": "%y%m",
+      "pivotYear": 2000
+    },
+    {
+      "name": "time38",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time48",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S",
+      "pivotYear": 2000
+    },
+    {
+      "name": "rid19",
+      "type": "integer"
+    },
+    {
+      "name": "rid29",
+      "type": "integer"
+    },
+    {
+      "name": "rid39",
+      "type": "integer"
+    },
+    {
+      "name": "rid49",
+      "type": "integer"
+    },
+    {
+      "name": "rid59",
+      "type": "integer"
+    },
+    {
+      "name": "rid69",
+      "type": "integer"
+    },
+    {
+      "name": "rid79",
+      "type": "integer"
+    },
+    {
+      "name": "rid89",
+      "type": "integer"
+    },
+    {
+      "name": "name19"
+    },
+    {
+      "name": "name29"
+    },
+    {
+      "name": "name39"
+    },
+    {
+      "name": "name49"
+    },
+    {
+      "name": "name59"
+    },
+    {
+      "name": "name69"
+    },
+    {
+      "name": "name79"
+    },
+    {
+      "name": "name89"
+    },
+    {
+      "name": "balance19",
+      "type": "real"
+    },
+    {
+      "name": "balance29",
+      "type": "real"
+    },
+    {
+      "name": "balance39",
+      "type": "real"
+    },
+    {
+      "name": "balance49",
+      "type": "real"
+    },
+    {
+      "name": "balance59",
+      "type": "real"
+    },
+    {
+      "name": "balance69",
+      "type": "real"
+    },
+    {
+      "name": "balance79",
+      "type": "real"
+    },
+    {
+      "name": "balance89",
+      "type": "real"
+    },
+    {
+      "name": "date19",
+      "type": "date",
+      "format": "%m%d%Y"
+    },
+    {
+      "name": "date29",
+      "type": "date",
+      "format": "%Y-%m-%d"
+    },
+    {
+      "name": "time19",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time29",
+      "type": "time",
+      "format": "%d/%m/%Y-%H-%M-%S"
+    },
+    {
+      "name": "date39",
+      "type": "date",
+      "format": "%y%m"
+    },
+    {
+      "name": "date49",
+      "type": "date",
+      "format": "%y%m",
+      "pivotYear": 2000
+    },
+    {
+      "name": "time39",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time49",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S",
+      "pivotYear": 2000
+    },
+    {
+      "name": "rid110",
+      "type": "integer"
+    },
+    {
+      "name": "rid210",
+      "type": "integer"
+    },
+    {
+      "name": "rid310",
+      "type": "integer"
+    },
+    {
+      "name": "rid410",
+      "type": "integer"
+    },
+    {
+      "name": "rid510",
+      "type": "integer"
+    },
+    {
+      "name": "rid610",
+      "type": "integer"
+    },
+    {
+      "name": "rid710",
+      "type": "integer"
+    },
+    {
+      "name": "rid810",
+      "type": "integer"
+    },
+    {
+      "name": "name110"
+    },
+    {
+      "name": "name210"
+    },
+    {
+      "name": "name310"
+    },
+    {
+      "name": "name410"
+    },
+    {
+      "name": "name510"
+    },
+    {
+      "name": "name610"
+    },
+    {
+      "name": "name710"
+    },
+    {
+      "name": "name810"
+    },
+    {
+      "name": "balance110",
+      "type": "real"
+    },
+    {
+      "name": "balance210",
+      "type": "real"
+    },
+    {
+      "name": "balance310",
+      "type": "real"
+    },
+    {
+      "name": "balance410",
+      "type": "real"
+    },
+    {
+      "name": "balance510",
+      "type": "real"
+    },
+    {
+      "name": "balance610",
+      "type": "real"
+    },
+    {
+      "name": "balance710",
+      "type": "real"
+    },
+    {
+      "name": "balance810",
+      "type": "real"
+    },
+    {
+      "name": "date110",
+      "type": "date",
+      "format": "%m%d%Y"
+    },
+    {
+      "name": "date210",
+      "type": "date",
+      "format": "%Y-%m-%d"
+    },
+    {
+      "name": "time110",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time210",
+      "type": "time",
+      "format": "%d/%m/%Y-%H-%M-%S"
+    },
+    {
+      "name": "date310",
+      "type": "date",
+      "format": "%y%m"
+    },
+    {
+      "name": "date410",
+      "type": "date",
+      "format": "%y%m",
+      "pivotYear": 2000
+    },
+    {
+      "name": "time310",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time410",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S",
+      "pivotYear": 2000
+    },
+    {
+      "name": "rid111",
+      "type": "integer"
+    },
+    {
+      "name": "rid211",
+      "type": "integer"
+    },
+    {
+      "name": "rid311",
+      "type": "integer"
+    },
+    {
+      "name": "rid411",
+      "type": "integer"
+    },
+    {
+      "name": "rid511",
+      "type": "integer"
+    },
+    {
+      "name": "rid611",
+      "type": "integer"
+    },
+    {
+      "name": "rid711",
+      "type": "integer"
+    },
+    {
+      "name": "rid811",
+      "type": "integer"
+    },
+    {
+      "name": "name111"
+    },
+    {
+      "name": "name211"
+    },
+    {
+      "name": "name311"
+    },
+    {
+      "name": "name411"
+    },
+    {
+      "name": "name511"
+    },
+    {
+      "name": "name611"
+    },
+    {
+      "name": "name711"
+    },
+    {
+      "name": "name811"
+    },
+    {
+      "name": "balance111",
+      "type": "real"
+    },
+    {
+      "name": "balance211",
+      "type": "real"
+    },
+    {
+      "name": "balance311",
+      "type": "real"
+    },
+    {
+      "name": "balance411",
+      "type": "real"
+    },
+    {
+      "name": "balance511",
+      "type": "real"
+    },
+    {
+      "name": "balance611",
+      "type": "real"
+    },
+    {
+      "name": "balance711",
+      "type": "real"
+    },
+    {
+      "name": "balance811",
+      "type": "real"
+    },
+    {
+      "name": "date111",
+      "type": "date",
+      "format": "%m%d%Y"
+    },
+    {
+      "name": "date211",
+      "type": "date",
+      "format": "%Y-%m-%d"
+    },
+    {
+      "name": "time111",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time211",
+      "type": "time",
+      "format": "%d/%m/%Y-%H-%M-%S"
+    },
+    {
+      "name": "date311",
+      "type": "date",
+      "format": "%y%m"
+    },
+    {
+      "name": "date411",
+      "type": "date",
+      "format": "%y%m",
+      "pivotYear": 2000
+    },
+    {
+      "name": "time311",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time411",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S",
+      "pivotYear": 2000
+    },
+    {
+      "name": "rid112",
+      "type": "integer"
+    },
+    {
+      "name": "rid212",
+      "type": "integer"
+    },
+    {
+      "name": "rid312",
+      "type": "integer"
+    },
+    {
+      "name": "rid412",
+      "type": "integer"
+    },
+    {
+      "name": "rid512",
+      "type": "integer"
+    },
+    {
+      "name": "rid612",
+      "type": "integer"
+    },
+    {
+      "name": "rid712",
+      "type": "integer"
+    },
+    {
+      "name": "rid812",
+      "type": "integer"
+    },
+    {
+      "name": "name112"
+    },
+    {
+      "name": "name212"
+    },
+    {
+      "name": "name312"
+    },
+    {
+      "name": "name412"
+    },
+    {
+      "name": "name512"
+    },
+    {
+      "name": "name612"
+    },
+    {
+      "name": "name712"
+    },
+    {
+      "name": "name812"
+    },
+    {
+      "name": "balance112",
+      "type": "real"
+    },
+    {
+      "name": "balance212",
+      "type": "real"
+    },
+    {
+      "name": "balance312",
+      "type": "real"
+    },
+    {
+      "name": "balance412",
+      "type": "real"
+    },
+    {
+      "name": "balance512",
+      "type": "real"
+    },
+    {
+      "name": "balance612",
+      "type": "real"
+    },
+    {
+      "name": "balance712",
+      "type": "real"
+    },
+    {
+      "name": "balance812",
+      "type": "real"
+    },
+    {
+      "name": "date112",
+      "type": "date",
+      "format": "%m%d%Y"
+    },
+    {
+      "name": "date212",
+      "type": "date",
+      "format": "%Y-%m-%d"
+    },
+    {
+      "name": "time112",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time212",
+      "type": "time",
+      "format": "%d/%m/%Y-%H-%M-%S"
+    },
+    {
+      "name": "date312",
+      "type": "date",
+      "format": "%y%m"
+    },
+    {
+      "name": "date412",
+      "type": "date",
+      "format": "%y%m",
+      "pivotYear": 2000
+    },
+    {
+      "name": "time312",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time412",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S",
+      "pivotYear": 2000
+    }
+  ]
+}

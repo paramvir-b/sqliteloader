@@ -12,10 +12,52 @@
       "type": "integer"
     },
     {
+      "name": "rid3",
+      "type": "integer"
+    },
+    {
+      "name": "rid4",
+      "type": "integer"
+    },
+    {
+      "name": "rid5",
+      "type": "integer"
+    },
+    {
+      "name": "rid6",
+      "type": "integer"
+    },
+    {
+      "name": "rid7",
+      "type": "integer"
+    },
+    {
+      "name": "rid8",
+      "type": "integer"
+    },
+    {
       "name": "name1"
     },
     {
       "name": "name2"
+    },
+    {
+      "name": "name3"
+    },
+    {
+      "name": "name4"
+    },
+    {
+      "name": "name5"
+    },
+    {
+      "name": "name6"
+    },
+    {
+      "name": "name7"
+    },
+    {
+      "name": "name8"
     },
     {
       "name": "balance1",
@@ -23,6 +65,30 @@
     },
     {
       "name": "balance2",
+      "type": "real"
+    },
+    {
+      "name": "balance3",
+      "type": "real"
+    },
+    {
+      "name": "balance4",
+      "type": "real"
+    },
+    {
+      "name": "balance5",
+      "type": "real"
+    },
+    {
+      "name": "balance6",
+      "type": "real"
+    },
+    {
+      "name": "balance7",
+      "type": "real"
+    },
+    {
+      "name": "balance8",
       "type": "real"
     },
     {
