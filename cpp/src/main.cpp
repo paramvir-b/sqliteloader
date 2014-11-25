@@ -995,6 +995,14 @@ int main(int argc, char **argv) {
 //        return 1;
 //    }
 
+    // Switching off journal
+    rc = sqlite3_exec(db, "PRAGMA journal_mode = OFF;", NULL, 0, &zErrMsg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+        return 1;
+    }
+
     cInsertStartTime = time(NULL);
 
     rc = sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, 0, &zErrMsg);
