@@ -809,7 +809,9 @@ string getCSVLayoutHelpExample() {
 }
 
 string getLayoutHelp() {
-    return "\nLayout definition:"
+    string sqliteVersion = string(sqlite3_libversion());
+    return "\nUsing Sqlite Version: " + sqliteVersion +
+            "\n\nLayout definition:"
             "\n General layout structure is define in json format:"
             "\n   <LayoutDefinition>"
             "\n     <FieldDefinitionList>"
