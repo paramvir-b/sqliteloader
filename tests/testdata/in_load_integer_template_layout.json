@@ -1,0 +1,39 @@
+{
+  "name": "inl",
+  "type": "csv",
+  "separator": "|",
+  "fieldList": [
+    {
+      "name": "rid11",
+      "type": "integer"
+    },
+    {
+      "name": "rid21",
+      "type": "integer"
+    },
+    {
+      "name": "rid31",
+      "type": "integer"
+    },
+    {
+      "name": "rid41",
+      "type": "integer"
+    },
+    {
+      "name": "rid51",
+      "type": "integer"
+    },
+    {
+      "name": "rid61",
+      "type": "integer"
+    },
+    {
+      "name": "rid71",
+      "type": "integer"
+    },
+    {
+      "name": "rid81",
+      "type": "integer"
+    }
+  ]
+}
