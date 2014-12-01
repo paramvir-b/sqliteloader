@@ -49,6 +49,7 @@ run_sqlite_loader() {
     if [[ -e $expOutputFile ]]; then
         echo "Comparing $outputFile against expected file : $expOutputFile"
         printf "select * from t;" | sqlite3 $outputFile > $actOutputFile
+        echo diff $expOutputFile $actOutputFile
         diff $expOutputFile $actOutputFile
         rc=$?
         if (( rc == 0 )); then
@@ -61,6 +62,16 @@ run_sqlite_loader() {
         echo "Nothing to compare against."
     fi
     echo "Output at: $outputFile "
+}
+
+run_for_type() {
+    typeset workDir=$1
+    typeset loadDir=$2
+    typeset type=$3
+
+    run_sqlite_loader $workDir in_load_${type}_template_layout.json in_load_${type}_template.csv in_load_${type}_template.exp_csv
+    time create_load_test_file in_load_${type}_template.csv $loadDir/in_load_${type}.csv 100000 $forceCreate
+    time run_sqlite_loader $workDir in_load_${type}_template_layout.json $loadDir/in_load_${type}.csv
 }
 
 WORK_DIR=./out
@@ -84,23 +95,10 @@ if [[ ! -e $LOAD_DIR ]]; then
     fi
 fi
 
-# Testing integer
-type="integer"
-run_sqlite_loader $WORK_DIR in_load_${type}_template_layout.json in_load_${type}_template.csv in_load_${type}_template.exp_csv
-time create_load_test_file in_load_${type}_template.csv $LOAD_DIR/in_load_${type}.csv 100000 $forceCreate
-time run_sqlite_loader $WORK_DIR in_load_${type}_template_layout.json $LOAD_DIR/in_load_${type}.csv
-
-# Testing text
-type=text
-run_sqlite_loader $WORK_DIR in_load_${type}_template_layout.json in_load_${type}_template.csv in_load_${type}_template.exp_csv
-time create_load_test_file in_load_${type}_template.csv $LOAD_DIR/in_load_${type}.csv 100000 $forceCreate
-time run_sqlite_loader $WORK_DIR in_load_${type}_template_layout.json $LOAD_DIR/in_load_${type}.csv
-
-# Testing real
-type=real
-run_sqlite_loader $WORK_DIR in_load_${type}_template_layout.json in_load_${type}_template.csv in_load_${type}_template.exp_csv
-time create_load_test_file in_load_${type}_template.csv $LOAD_DIR/in_load_${type}.csv 100000 $forceCreate
-time run_sqlite_loader $WORK_DIR in_load_${type}_template_layout.json $LOAD_DIR/in_load_${type}.csv
+run_for_type $WORK_DIR $LOAD_DIR "integer"
+run_for_type $WORK_DIR $LOAD_DIR "text"
+run_for_type $WORK_DIR $LOAD_DIR "real"
+run_for_type $WORK_DIR $LOAD_DIR "date_pivot"
 #time create_load_test_file in_load_template.csv in_load.csv 10 $forceCreate
 
 #rm in_load.db; time ./sqliteloader -l in_load_full_layout.json -i in_load.csv -o in_load.db

@@ -148,14 +148,20 @@ int getLastTwoDigits(int num) {
 }
 
 void fixYear(int pivotYear, struct tm *ptm) {
-    int twoDigitYear = getLastTwoDigits(ptm->tm_year + 1900);
-    int startPY = pivotYear - 50;
+    int year = getLastTwoDigits(ptm->tm_year + 1900);
 
-    if (twoDigitYear < 50) {
-        ptm->tm_year = pivotYear + twoDigitYear - 1900;
-    } else if (twoDigitYear >= 50) {
-        ptm->tm_year = startPY + (twoDigitYear - 50) - 1900;
+    // TODO WE CAN COMPUTE THIS ONCE FOR PIVOT YEAR
+    int low = pivotYear - 50;
+
+    int t;
+    if (low >= 0) {
+        t = low % 100;
+    } else {
+        t = 99 + ((low + 1) % 100);
     }
+
+    year += low + ((year < t) ? 100 : 0) - t;
+    ptm->tm_year = year - 1900;
 }
 
 int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
@@ -810,34 +816,34 @@ string getCSVLayoutHelpExample() {
 
 string getLayoutHelp() {
     string sqliteVersion = string(sqlite3_libversion());
-    return "\nUsing Sqlite Version: " + sqliteVersion +
-            "\n\nLayout definition:"
-            "\n General layout structure is define in json format:"
-            "\n   <LayoutDefinition>"
-            "\n     <FieldDefinitionList>"
-            "\n       <FieldDefinition>"
-            "\n Layout Definition Parameters:"
-            "\n   name      : Layout name that will be used as table name. Can also be passed as an argument to utility."
-            "\n               Example: book_info"
+    return "\nUsing Sqlite Version: " + sqliteVersion
+            + "\n\nLayout definition:"
+                    "\n General layout structure is define in json format:"
+                    "\n   <LayoutDefinition>"
+                    "\n     <FieldDefinitionList>"
+                    "\n       <FieldDefinition>"
+                    "\n Layout Definition Parameters:"
+                    "\n   name      : Layout name that will be used as table name. Can also be passed as an argument to utility."
+                    "\n               Example: book_info"
 //            "\n   type      : csv/flat. 'csv' for delimited file and 'flat' for flat files"
-            "\n   type      : csv. 'csv' for delimited file"
-            "\n               Example: csv"
-            "\n   separator : Separator used for file. Only valid for csv files."
-            "\n Layout Field Definition Parameters:"
-            "\n   name     : Field name. It will become the column name in db"
-            "\n              Example: balance"
-            "\n   type     : text/integer/real/date/time. 'text' text field like \"hello\". 'integer' for integers like 10. 'real' for decimals like 5.6"
-            "\n              Example: real"
-            "\n   format   : If type is date/time then we need to provide this. Use date format from \n   http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html"
-            "\n              Example: %m%d%Y for 11022014 which is 2014-02-11"
-            "\n              Example: %d/%m/%Y-%H-%M-%S for 02/11/2014-21-56-53 which is 2014-02-11T21:56:53"
-            "\n   pivotYear: If type is date/time then we can provide pivot year. Refer to \n   http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormatter.html#withPivotYear(int)"
-            "\n              Example: 2000"
-            "\n   missingValue: If this is the value then it will be replaced with null in db"
-            "\n              Example: 2000"
+                    "\n   type      : csv. 'csv' for delimited file"
+                    "\n               Example: csv"
+                    "\n   separator : Separator used for file. Only valid for csv files."
+                    "\n Layout Field Definition Parameters:"
+                    "\n   name     : Field name. It will become the column name in db"
+                    "\n              Example: balance"
+                    "\n   type     : text/integer/real/date/time. 'text' text field like \"hello\". 'integer' for integers like 10. 'real' for decimals like 5.6"
+                    "\n              Example: real"
+                    "\n   format   : If type is date/time then we need to provide this. Use date format from \n   http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html"
+                    "\n              Example: %m%d%Y for 11022014 which is 2014-02-11"
+                    "\n              Example: %d/%m/%Y-%H-%M-%S for 02/11/2014-21-56-53 which is 2014-02-11T21:56:53"
+                    "\n   pivotYear: If type is date/time then we can provide pivot year. Refer to \n   http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormatter.html#withPivotYear(int)"
+                    "\n              Example: 2000"
+                    "\n   missingValue: If this is the value then it will be replaced with null in db"
+                    "\n              Example: 2000"
 //            "\n   length : Any integer number. Length for a given field. Only valid for flat files"
 //            "\n            Example: 7"
-            "\n";
+                    "\n";
 }
 
 OptionParser createParser() {

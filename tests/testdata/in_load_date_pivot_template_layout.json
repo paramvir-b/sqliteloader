@@ -1,0 +1,53 @@
+{
+  "name": "inl",
+  "type": "csv",
+  "separator": "|",
+  "fieldList": [
+    {
+      "name": "date1",
+      "type": "date",
+      "format": "%m%d%y",
+      "pivotYear": 2010
+    },
+    {
+      "name": "date2",
+      "type": "date",
+      "format": "%y-%m-%d",
+      "pivotYear": 2010
+    },
+    {
+      "name": "time1",
+      "type": "time",
+      "format": "%y-%m-%dT%H:%M:%S",
+      "pivotYear": 1990
+    },
+    {
+      "name": "time2",
+      "type": "time",
+      "format": "%d/%m/%y-%H-%M-%S",
+      "pivotYear": 1990
+    },
+    {
+      "name": "date3",
+      "type": "date",
+      "format": "%y%m"      
+    },
+    {
+      "name": "date4",
+      "type": "date",
+      "format": "%y%m",
+      "pivotYear": 2000
+    },
+    {
+      "name": "time3",
+      "type": "time",
+      "format": "%y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time4",
+      "type": "date",
+      "format": "%y-%m-%dT%H:%M:%S",
+      "pivotYear": 2000
+    }
+  ]
+}
