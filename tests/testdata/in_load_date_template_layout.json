@@ -1,0 +1,47 @@
+{
+  "name": "inl",
+  "type": "csv",
+  "separator": "|",
+  "fieldList": [
+    {
+      "name": "date1",
+      "type": "date",
+      "format": "%m%d%Y"
+    },
+    {
+      "name": "date2",
+      "type": "date",
+      "format": "%Y-%m-%d"
+    },
+    {
+      "name": "time1",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time2",
+      "type": "time",
+      "format": "%d/%m/%Y-%H-%M-%S"
+    },
+    {
+      "name": "date3",
+      "type": "date",
+      "format": "%Y%m"      
+    },
+    {
+      "name": "date4",
+      "type": "date",
+      "format": "%Y%m"
+    },
+    {
+      "name": "time3",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time4",
+      "type": "date",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    }
+  ]
+}

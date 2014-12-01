@@ -44,7 +44,9 @@ run_sqlite_loader() {
 
     echo outputFile=$outputFile
 
-    rm -f $outputFile; time ./sqliteloader -l $layoutFile -i $inputFile -t t -o $outputFile
+    rm -f $outputFile;
+    echo time ./sqliteloader -l $layoutFile -i $inputFile -t t -o $outputFile
+    time ./sqliteloader -l $layoutFile -i $inputFile -t t -o $outputFile
 
     if [[ -e $expOutputFile ]]; then
         echo "Comparing $outputFile against expected file : $expOutputFile"
@@ -68,17 +70,16 @@ run_for_type() {
     typeset workDir=$1
     typeset loadDir=$2
     typeset type=$3
+    typeset num=$4
 
     run_sqlite_loader $workDir in_load_${type}_template_layout.json in_load_${type}_template.csv in_load_${type}_template.exp_csv
-    time create_load_test_file in_load_${type}_template.csv $loadDir/in_load_${type}.csv 100000 $forceCreate
+    time create_load_test_file in_load_${type}_template.csv $loadDir/in_load_${type}.csv $num $forceCreate
     time run_sqlite_loader $workDir in_load_${type}_template_layout.json $loadDir/in_load_${type}.csv
 }
 
 WORK_DIR=./out
 LOAD_DIR=./load
 forceCreate=$1
-
-NUM_COUNT=1000
 
 rm -rf $WORK_DIR
 mkdir -p $WORK_DIR
@@ -95,10 +96,12 @@ if [[ ! -e $LOAD_DIR ]]; then
     fi
 fi
 
-run_for_type $WORK_DIR $LOAD_DIR "integer"
-run_for_type $WORK_DIR $LOAD_DIR "text"
-run_for_type $WORK_DIR $LOAD_DIR "real"
-run_for_type $WORK_DIR $LOAD_DIR "date_pivot"
+NUM_COUNT=100000
+run_for_type $WORK_DIR $LOAD_DIR "text" $NUM_COUNT 
+run_for_type $WORK_DIR $LOAD_DIR "integer" $NUM_COUNT
+run_for_type $WORK_DIR $LOAD_DIR "real" $NUM_COUNT
+run_for_type $WORK_DIR $LOAD_DIR "date" $NUM_COUNT
+run_for_type $WORK_DIR $LOAD_DIR "date_pivot" $NUM_COUNT
 #time create_load_test_file in_load_template.csv in_load.csv 10 $forceCreate
 
 #rm in_load.db; time ./sqliteloader -l in_load_full_layout.json -i in_load.csv -o in_load.db
