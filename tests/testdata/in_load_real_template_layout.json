@@ -3,7 +3,7 @@
   "type": "csv",
   "separator": "|",
   "fieldList": [
-        {
+    {
       "name": "balance1",
       "type": "real"
     },
