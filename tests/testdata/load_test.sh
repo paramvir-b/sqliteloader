@@ -95,6 +95,12 @@ type=text
 run_sqlite_loader $WORK_DIR in_load_${type}_template_layout.json in_load_${type}_template.csv in_load_${type}_template.exp_csv
 time create_load_test_file in_load_${type}_template.csv $LOAD_DIR/in_load_${type}.csv 100000 $forceCreate
 time run_sqlite_loader $WORK_DIR in_load_${type}_template_layout.json $LOAD_DIR/in_load_${type}.csv
+
+# Testing real
+type=real
+run_sqlite_loader $WORK_DIR in_load_${type}_template_layout.json in_load_${type}_template.csv in_load_${type}_template.exp_csv
+time create_load_test_file in_load_${type}_template.csv $LOAD_DIR/in_load_${type}.csv 100000 $forceCreate
+time run_sqlite_loader $WORK_DIR in_load_${type}_template_layout.json $LOAD_DIR/in_load_${type}.csv
 #time create_load_test_file in_load_template.csv in_load.csv 10 $forceCreate
 
 #rm in_load.db; time ./sqliteloader -l in_load_full_layout.json -i in_load.csv -o in_load.db

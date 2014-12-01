@@ -1,0 +1,39 @@
+{
+  "name": "inl",
+  "type": "csv",
+  "separator": "|",
+  "fieldList": [
+        {
+      "name": "balance1",
+      "type": "real"
+    },
+    {
+      "name": "balance2",
+      "type": "real"
+    },
+    {
+      "name": "balance3",
+      "type": "real"
+    },
+    {
+      "name": "balance4",
+      "type": "real"
+    },
+    {
+      "name": "balance5",
+      "type": "real"
+    },
+    {
+      "name": "balance6",
+      "type": "real"
+    },
+    {
+      "name": "balance7",
+      "type": "real"
+    },
+    {
+      "name": "balance8",
+      "type": "real"
+    }
+  ]
+}
