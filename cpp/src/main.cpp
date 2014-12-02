@@ -166,7 +166,8 @@ void fixYear(int pivotYear, struct tm *ptm) {
 
 int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
         sqlite3_stmt *sqlStmt) {
-    static char datestring[19];
+#define MAX_DATE_STRING_LEN 20
+    static char datestring[MAX_DATE_STRING_LEN];
     DelimFileData *pDelimInfo = (DelimFileData *) pInfo;
 //char separator = pDelimInfo->separator;
     char separator = layout.separator;
@@ -260,7 +261,7 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                 if (field.pivotYear != -1) {
                     fixYear(field.pivotYear, &tm);
                 }
-                strftime(datestring, 19, "%Y-%m-%d", &tm);
+                strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%d", &tm);
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
                 sqlite3_bind_text(sqlStmt, fieldCounter + 1,
@@ -288,16 +289,16 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                 if (field.pivotYear != -1) {
                     fixYear(field.pivotYear, &tm);
                 }
-                strftime(datestring, 19, "%Y-%m-%dT%H:%M:%S", &tm);
+                strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%dT%H:%M:%S", &tm);
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
                 sqlite3_bind_text(sqlStmt, fieldCounter + 1,
                         datestring,
-                        19,
+                        MAX_DATE_STRING_LEN,
                         SQLITE_TRANSIENT);
 #    else
                 rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1, datestring,
-                        19,
+                        MAX_DATE_STRING_LEN,
                         SQLITE_TRANSIENT);
 
                 if (rc != SQLITE_OK) {
