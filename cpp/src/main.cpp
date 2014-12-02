@@ -518,7 +518,8 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
     }
 
     if (tableName.length() <= 0) {
-        throw "Table name not specified either in layout or as argument";
+        throw string(
+                "Table name not specified either in layout or as argument");
     }
 
     Layout *pLayout = new Layout(fieldListCount);
@@ -536,7 +537,7 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
 
         cJSON *jsonFieldName = cJSON_GetObjectItem(jsonField, "name");
         if (jsonFieldName == NULL) {
-            throw "Name cannot be empty";
+            throw string("Name cannot be empty");
         }
 
         cJSON *jsonMissingValue = cJSON_GetObjectItem(jsonField,
@@ -913,8 +914,9 @@ int main(int argc, char **argv) {
     try {
         pLayout = parseLayout(layoutFileName, argTableName);
     } catch (string& e) {
-        cout << e << endl;
+        cout << "\nError Occurred: " << e << endl;
         parser.print_help();
+        cout << "\nError Occurred: " << e << endl;
         return 1;
     }
 
