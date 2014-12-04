@@ -916,8 +916,6 @@ int main(int argc, char **argv) {
         pLayout = parseLayout(layoutFileName, argTableName);
     } catch (string& e) {
         cout << "\nError Occurred: " << e << endl;
-        parser.print_help();
-        cout << "\nError Occurred: " << e << endl;
         return 1;
     }
 
