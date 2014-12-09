@@ -1,12 +1,13 @@
 #!/bin/bash
 
 create_load_test_file() {
-    typeset tfn=$1
-    typeset ofn=$2
-    typeset num=$3
-    typeset fc=$4
-    typeset tf1="t1.out"
-    typeset tf2="t2.out"
+    typeset workDir=$1
+    typeset tfn=$2
+    typeset ofn=$3
+    typeset num=$4
+    typeset fc=$5
+    typeset tf1=$workDir/t1.out
+    typeset tf2=$workDir/t2.out
 
     if [[ $fc == "true" ]]; then
         echo "Removing $ofn file"
@@ -20,11 +21,15 @@ create_load_test_file() {
 
     echo "Creating $ofn"
     > $ofn
- #   for i in {1..10000}
+    > $tf2
+    cp $tfn $tf1
     for i in $(seq 1 $num);
     do
-        cat $tfn >> $ofn
+        cat $tf1 $tf1 >> $tf2
+        mv $tf2 $tf1
     done
+
+    mv $tf1 $ofn
     echo "Done creating $ofn"
 }
 
@@ -42,6 +47,16 @@ run_sqlite_loader() {
         exit 1;
     fi
 
+    if [[ ! -e ../../cpp/bin/sqliteloader ]]; then
+        echo "Sqliteloader is missing. Try compiliing it"
+        exit 1;
+    else
+        if [[ ! -e ./sqliteloader ]]; then
+            ln -s ../../cpp/bin/sqliteloader sqliteloader
+        fi
+    fi
+
+    ln -s ../../cpp/bin/sqliteloader sqliteloader
     echo outputFile=$outputFile
 
     rm -f $outputFile;
@@ -71,10 +86,11 @@ run_for_type() {
     typeset loadDir=$2
     typeset type=$3
     typeset num=$4
+    typeset loadFile=$loadDir/in_load_${type}_${num}.csv
 
     run_sqlite_loader $workDir in_load_${type}_template_layout.json in_load_${type}_template.csv in_load_${type}_template.exp_csv
-    time create_load_test_file in_load_${type}_template.csv $loadDir/in_load_${type}.csv $num $forceCreate
-    time run_sqlite_loader $workDir in_load_${type}_template_layout.json $loadDir/in_load_${type}.csv
+    time create_load_test_file $workDir in_load_${type}_template.csv $loadFile $num $forceCreate
+    time run_sqlite_loader $workDir in_load_${type}_template_layout.json $loadFile
 }
 
 WORK_DIR=./out
@@ -96,12 +112,14 @@ if [[ ! -e $LOAD_DIR ]]; then
     fi
 fi
 
-NUM_COUNT=100000
+NUM_COUNT=21
 run_for_type $WORK_DIR $LOAD_DIR "text" $NUM_COUNT 
 run_for_type $WORK_DIR $LOAD_DIR "integer" $NUM_COUNT
 run_for_type $WORK_DIR $LOAD_DIR "real" $NUM_COUNT
 run_for_type $WORK_DIR $LOAD_DIR "date" $NUM_COUNT
 run_for_type $WORK_DIR $LOAD_DIR "date_pivot" $NUM_COUNT
+
+
 #time create_load_test_file in_load_template.csv in_load.csv 10 $forceCreate
 
 #rm in_load.db; time ./sqliteloader -l in_load_full_layout.json -i in_load.csv -o in_load.db
