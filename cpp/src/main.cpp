@@ -958,7 +958,8 @@ int main(int argc, char **argv) {
 
     rc = sqlite3_open(dbFileName.c_str(), &db);
     if (rc) {
-        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+        fprintf(stderr, "Can't open database file: %s\n", dbFileName.c_str());
+        fprintf(stderr, "Can't open database sqlite error: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
         return (1);
     }
