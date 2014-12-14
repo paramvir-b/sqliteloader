@@ -162,6 +162,11 @@ void fixYear(int pivotYear, struct tm *ptm) {
 
     year += low + ((year < t) ? 100 : 0) - t;
     ptm->tm_year = year - 1900;
+
+    // FIXME WE HAVE TO THINK WHEN NO DATE/MONTH FORMAT IS SPECIFIED DO THIS
+    if (ptm->tm_mday < 0 || ptm->tm_mday > 31) {
+        ptm->tm_mday = 1;
+    }
 }
 
 int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
@@ -289,7 +294,8 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                 if (field.pivotYear != -1) {
                     fixYear(field.pivotYear, &tm);
                 }
-                strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%dT%H:%M:%S", &tm);
+                strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%dT%H:%M:%S",
+                        &tm);
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
                 sqlite3_bind_text(sqlStmt, fieldCounter + 1,
@@ -298,8 +304,8 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                         SQLITE_TRANSIENT);
 #    else
                 rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1, datestring,
-                        MAX_DATE_STRING_LEN,
-                        SQLITE_TRANSIENT);
+                MAX_DATE_STRING_LEN,
+                SQLITE_TRANSIENT);
 
                 if (rc != SQLITE_OK) {
                     fprintf(stderr, "SQL error %d: text binding failed\n", rc);
@@ -959,7 +965,8 @@ int main(int argc, char **argv) {
     rc = sqlite3_open(dbFileName.c_str(), &db);
     if (rc) {
         fprintf(stderr, "Can't open database file: %s\n", dbFileName.c_str());
-        fprintf(stderr, "Can't open database sqlite error: %s\n", sqlite3_errmsg(db));
+        fprintf(stderr, "Can't open database sqlite error: %s\n",
+                sqlite3_errmsg(db));
         sqlite3_close(db);
         return (1);
     }
