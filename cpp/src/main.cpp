@@ -875,6 +875,9 @@ OptionParser createParser() {
             "Append to existing table if it does exist");
     parser.add_option("-v").dest("v").set_default("0").action("store_true").help(
             "Debug mode");
+    parser.add_option("-p").dest("p").metavar("<comma-separated-pragma-list>").help(
+            "Comma separated pragma which ran before creation of DB.");
+
     parser.epilog(getLayoutHelp() + getCSVLayoutHelpExample());
     return parser;
 }
@@ -895,6 +898,7 @@ int main(int argc, char **argv) {
     bool isDebug = atoi(options["v"].c_str()) == 1 ? true : false;
     bool isAppendMode = atoi(options["a"].c_str()) == 1 ? true : false;
     bool isDeleteMode = atoi(options["d"].c_str()) == 1 ? true : false;
+    string pragmaList = options["p"];
 
     if (layoutFileName.length() == 0) {
         cout << "Layout file name cannot be empty" << endl;
@@ -1022,6 +1026,17 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    if (pragmaList.length() > 0) {
+        if (isDebug)
+            cout << "Applying pragmaList=" << pragmaList << endl;
+        rc = sqlite3_exec(db, pragmaList.c_str(), NULL, 0, &zErrMsg);
+        if (rc != SQLITE_OK) {
+            fprintf(stderr, "Error running pragmaList. SQL error: %s\n",
+                    zErrMsg);
+            sqlite3_free(zErrMsg);
+            return 1;
+        }
+    }
     cInsertStartTime = time(NULL);
 
     rc = sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, 0, &zErrMsg);
