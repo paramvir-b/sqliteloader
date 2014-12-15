@@ -166,11 +166,22 @@ void fixYear(int pivotYear, struct tm *ptm) {
     year += low + ((year < t) ? 100 : 0) - t;
     ptm->tm_year = year - 1900;
 
-    // FIXME WE HAVE TO THINK WHEN NO DATE/MONTH FORMAT IS SPECIFIED DO THIS
-    if (ptm->tm_mday < 0 || ptm->tm_mday > 31) {
-        ptm->tm_mday = 1;
-    }
 }
+
+// For init refer to http://www.cplusplus.com/reference/ctime/tm/ or
+// http://pubs.opengroup.org/onlinepubs/7908799/xsh/time.h.html
+// Setting it to mid-night of Jan 1, 1900
+
+#define INIT_TM(x) \
+        x.tm_sec = 0; \
+        x.tm_min = 0; \
+        x.tm_hour = 0;\
+        x.tm_mday = 1;\
+        x.tm_mon = 0;\
+        x.tm_year = 0;\
+        x.tm_wday = 1; /* January 1, 1900 is a Monday refer http://www.timeanddate.com/date/weekday.html */ \
+        x.tm_yday = 0;\
+        x.tm_isdst = 0;\
 
 int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
         sqlite3_stmt *sqlStmt) {
@@ -271,6 +282,7 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
         }
 
         if (field.type == 'D') {
+            INIT_TM(tm)
             if (strptime(fieldStart, field.format.c_str(), &tm) != NULL) {
                 if (field.pivotYear != -1) {
                     fixYear(field.pivotYear, &tm);
@@ -299,6 +311,7 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
         }
 
         if (field.type == 'T') {
+            INIT_TM(tm)
             if (strptime(fieldStart, field.format.c_str(), &tm) != NULL) {
                 if (field.pivotYear != -1) {
                     fixYear(field.pivotYear, &tm);
