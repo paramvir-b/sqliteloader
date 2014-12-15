@@ -867,7 +867,7 @@ OptionParser createParser() {
     parser.add_option("-l").dest("l").metavar("<layout_file>").help(
             "Layout file containing field definitions. These \
                     field definitions will be used for parsing fixed length record");
-    parser.add_option("-c").dest("c").metavar("<N>").set_default("10").help(
+    parser.add_option("-c").dest("c").metavar("<N>").set_default("10000").help(
             "Number of records after which commit operation is called on the data base");
     parser.add_option("-d").dest("d").set_default("0").action("store_true").help(
             "Delete if table already exists");
@@ -1066,6 +1066,7 @@ int main(int argc, char **argv) {
     int fieldCounter = 0;
     char *lineStr = NULL;
 //    Data *pData = new Data[fieldListCount];
+    long commitCounter = 0;
     while (getline(*inStream, line)) {
 
         /*
@@ -1083,6 +1084,11 @@ int main(int argc, char **argv) {
 #    ifndef ENABLE_SQL_CHECKS
         sqlite3_step(sqlStmt);
         sqlite3_reset(sqlStmt);
+        if (commitCounter == commitAfter) {
+            commitCounter = 0;
+            sqlite3_exec(db, "END TRANSACTION;", NULL, 0, NULL);
+            sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, 0, NULL);
+        }
 #    else
         rc = sqlite3_step(sqlStmt);
         if (rc == SQLITE_DONE) {
@@ -1095,8 +1101,24 @@ int main(int argc, char **argv) {
             fprintf(stderr, "SQL error %d: step failed\n", rc);
             return 1;
         }
+        if (commitCounter == commitAfter) {
+            commitCounter = 0;
+            rc = sqlite3_exec(db, "END TRANSACTION;", NULL, 0, &zErrMsg);
+            if (rc != SQLITE_OK) {
+                fprintf(stderr, "SQL error: %s\n", zErrMsg);
+                sqlite3_free(zErrMsg);
+                return 1;
+            }
+            rc = sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, 0, &zErrMsg);
+            if (rc != SQLITE_OK) {
+                fprintf(stderr, "SQL error: %s\n", zErrMsg);
+                sqlite3_free(zErrMsg);
+                return 1;
+            }
+        }
 #    endif
 #endif
+        commitCounter++;
         recordCounter++;
     }
 
