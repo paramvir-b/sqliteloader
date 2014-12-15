@@ -71,6 +71,7 @@ struct Layout;
 
 struct Field {
     Layout *layoutPtr;
+    int isSkip;
     string name;
     char type;
     int length;
@@ -79,14 +80,16 @@ struct Field {
     string *missingValue;
     int endOffSet;
     Field() :
-            type('S'), length(0), format(""), pivotYear(-1), missingValue(NULL), endOffSet(
-                    0) {
+            layoutPtr(NULL), isSkip(0), type('S'), length(0), format(""), pivotYear(
+                    -1), missingValue(
+            NULL), endOffSet(0) {
     }
 
     friend ostream& operator<<(ostream &outStream, Field &field) {
-        cout << "[ name=" << field.name << ", type=" << field.type
-                << ", length=" << field.length << ", format=" << field.format
-                << ", pivotYear=" << field.pivotYear << ", missingValue="
+        cout << "[ isSkip=" << field.isSkip << " name=" << field.name
+                << ", type=" << field.type << ", length=" << field.length
+                << ", format=" << field.format << ", pivotYear="
+                << field.pivotYear << ", missingValue="
                 << (field.missingValue == NULL ?
                         "NULL" : field.missingValue->c_str()) << ", endOffSet="
                 << field.endOffSet << " ]";
@@ -183,7 +186,8 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
 
     int indexInLine = 0;
     int fieldListCount = layout.fieldListLen;
-    for (int fieldCounter = 0; fieldCounter < fieldListCount; fieldCounter++) {
+    for (int fieldCounter = 0, bindFieldCounter = 0;
+            fieldCounter < fieldListCount; fieldCounter++) {
         Field &field = layout.fieldList[fieldCounter];
         char *fieldStart = lineStr + indexInLine;
         int fieldLength = 0;
@@ -204,6 +208,11 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
             }
         }
 
+        if (field.isSkip == 1) {
+            indexInLine += fieldLength + 1;
+            continue;
+        }
+        bindFieldCounter++;
         for (; ti >= 0 && (ch = *(fieldStart + ti - 1)) == ' '; ti--) {
         }
 
@@ -226,9 +235,9 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
         if (nonSpaceStartIndex == -1) {
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
-            sqlite3_bind_null(sqlStmt, fieldCounter + 1);
+            sqlite3_bind_null(sqlStmt, bindFieldCounter);
 #    else
-            rc = sqlite3_bind_null(sqlStmt, fieldCounter + 1);
+            rc = sqlite3_bind_null(sqlStmt, bindFieldCounter);
             if (rc != SQLITE_OK) {
                 fprintf(stderr, "SQL error %d: text null binding failed\n", rc);
                 return 1;
@@ -242,12 +251,12 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
         if (field.type == 'S' || field.type == 'I' || field.type == 'R') {
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
-            sqlite3_bind_text(sqlStmt, fieldCounter + 1,
+            sqlite3_bind_text(sqlStmt, bindFieldCounter,
                     fieldStart + nonSpaceStartIndex,
                     nonSpaceEndIndex - nonSpaceStartIndex,
                     SQLITE_TRANSIENT);
 #    else
-            rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1,
+            rc = sqlite3_bind_text(sqlStmt, bindFieldCounter,
                     fieldStart + nonSpaceStartIndex,
                     nonSpaceEndIndex - nonSpaceStartIndex,
                     SQLITE_TRANSIENT);
@@ -269,12 +278,12 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                 strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%d", &tm);
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
-                sqlite3_bind_text(sqlStmt, fieldCounter + 1,
+                sqlite3_bind_text(sqlStmt, bindFieldCounter,
                         datestring,
                         10,
                         SQLITE_TRANSIENT);
 #    else
-                rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1, datestring,
+                rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
                         10,
                         SQLITE_TRANSIENT);
 
@@ -298,12 +307,12 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                         &tm);
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
-                sqlite3_bind_text(sqlStmt, fieldCounter + 1,
+                sqlite3_bind_text(sqlStmt, bindFieldCounter,
                         datestring,
                         MAX_DATE_STRING_LEN,
                         SQLITE_TRANSIENT);
 #    else
-                rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1, datestring,
+                rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
                 MAX_DATE_STRING_LEN,
                 SQLITE_TRANSIENT);
 
@@ -547,6 +556,25 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
             throw string("Name cannot be empty");
         }
 
+        cJSON *jsonIsSkip = cJSON_GetObjectItem(jsonField, "isSkip");
+        if (jsonIsSkip != NULL) {
+            if (strcmp(jsonIsSkip->valuestring, "true") == 0) {
+                pLayout->fieldList[i].isSkip = 1;
+                continue;
+            } else if (strcmp(jsonIsSkip->valuestring, "false") == 0) {
+                pLayout->fieldList[i].isSkip = 0;
+                continue;
+            } else {
+                char str[20];
+                sprintf(str, "%d", (i + 1));
+                string errStr = "Invalid value='";
+                errStr += jsonIsSkip->valuestring;
+                errStr += "' for isSkip at field number=";
+                errStr += str;
+                throw errStr;
+            }
+        }
+
         cJSON *jsonMissingValue = cJSON_GetObjectItem(jsonField,
                 "missingValue");
         if (jsonMissingValue != NULL) {
@@ -633,31 +661,33 @@ string getCreateTableQuery(Layout & layout) {
     string createTableQry;
     createTableQry = "CREATE TABLE '" + layout.name + "' ( ";
     for (int i = 0; i < layout.fieldListLen; i++) {
-        createTableQry += layout.fieldList[i].name;
+        Field &field = layout.fieldList[i];
+        if (field.isSkip != 1) {
 
-        if (layout.fieldList[i].type == 'S' || layout.fieldList[i].type == 'D'
-                || layout.fieldList[i].type == 'T') {
-            createTableQry += " TEXT";
+            createTableQry += field.name;
+
+            if (field.type == 'S' || field.type == 'D' || field.type == 'T') {
+                createTableQry += " TEXT";
+            }
+
+            if (field.type == 'I') {
+                createTableQry += " INTEGER";
+            }
+
+            if (field.type == 'R') {
+                createTableQry += " REAL";
+            }
+
+            if (fieldCounter < layout.fieldListLen - 1) {
+                createTableQry += ", ";
+            }
         }
-
-        if (layout.fieldList[i].type == 'I') {
-            createTableQry += " INTEGER";
-        }
-
-        if (layout.fieldList[i].type == 'R') {
-            createTableQry += " REAL";
-        }
-
-        if (fieldCounter < layout.fieldListLen - 1) {
-            createTableQry += ", ";
-        }
-
         if (i > 0)
-            layout.fieldList[i].endOffSet = layout.fieldList[i - 1].endOffSet
+            field.endOffSet = layout.fieldList[i - 1].endOffSet
                     + layout.fieldList[i].length;
         else
-            layout.fieldList[i].endOffSet = layout.fieldList[i].length;
-        recordLen += layout.fieldList[i].length;
+            field.endOffSet = field.length;
+        recordLen += field.length;
         fieldCounter++;
     }
     createTableQry += ");";
@@ -666,24 +696,18 @@ string getCreateTableQuery(Layout & layout) {
 
 string getInsertQuery(Layout & layout) {
 // building insert table query
-    int recordLen = 0;
     int fieldCounter = 0;
 
     string insertBindQry;
     insertBindQry = "INSERT INTO '" + layout.name + "' VALUES ( ";
     for (int i = 0; i < layout.fieldListLen; i++) {
-
-        insertBindQry += "?";
-        if (fieldCounter < layout.fieldListLen - 1) {
-            insertBindQry += ", ";
+        Field &field = layout.fieldList[i];
+        if (field.isSkip != 1) {
+            insertBindQry += "?";
+            if (fieldCounter < layout.fieldListLen - 1) {
+                insertBindQry += ", ";
+            }
         }
-
-        if (i > 0)
-            layout.fieldList[i].endOffSet = layout.fieldList[i - 1].endOffSet
-                    + layout.fieldList[i].length;
-        else
-            layout.fieldList[i].endOffSet = layout.fieldList[i].length;
-        recordLen += layout.fieldList[i].length;
         fieldCounter++;
     }
     insertBindQry += ");";

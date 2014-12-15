@@ -112,7 +112,8 @@ if [[ ! -e $LOAD_DIR ]]; then
     fi
 fi
 
-NUM_COUNT=${1:-19}
+NUM_COUNT=${2:-19}
+run_sqlite_loader $WORK_DIR in1_big_full_layout.json in1_big.csv in1_big_exp.csv
 run_for_type $WORK_DIR $LOAD_DIR "text" $NUM_COUNT 
 run_for_type $WORK_DIR $LOAD_DIR "integer" $NUM_COUNT
 run_for_type $WORK_DIR $LOAD_DIR "real" $NUM_COUNT

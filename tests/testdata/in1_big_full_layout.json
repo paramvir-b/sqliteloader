@@ -4,6 +4,10 @@
   "separator": "",
   "fieldList": [
     {
+      "name": "miss1",
+      "isSkip": "true"
+    },
+    {
       "name": "rid1",
       "type": "integer"
     },
