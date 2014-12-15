@@ -556,6 +556,8 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
             throw string("Name cannot be empty");
         }
 
+        pLayout->fieldList[i].name = jsonFieldName->valuestring;
+
         cJSON *jsonIsSkip = cJSON_GetObjectItem(jsonField, "isSkip");
         if (jsonIsSkip != NULL) {
             if (strcmp(jsonIsSkip->valuestring, "true") == 0) {
@@ -586,7 +588,7 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
             // Check length if it is flat file
             if (cJSON_GetObjectItem(jsonField, "length") == NULL) {
                 string e = string("Name: ");
-                e += jsonFieldName->valuestring;
+                e += pLayout->fieldList[i].name;
                 e += "\nLength cannot be empty";
                 throw e;
             }
@@ -602,7 +604,6 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
             recordLen += pLayout->fieldList[i].length;
         }
 
-        pLayout->fieldList[i].name = jsonFieldName->valuestring;
         char * type = (char *) "text";
         if (cJSON_GetObjectItem(jsonField, "type") != NULL)
             type = cJSON_GetObjectItem(jsonField, "type")->valuestring;
@@ -632,7 +633,7 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
             cJSON *jsonDateFormat = cJSON_GetObjectItem(jsonField, "format");
             if (jsonDateFormat == NULL) {
                 string e = string("Name: ");
-                e += jsonFieldName->valuestring;
+                e += pLayout->fieldList[i].name;
                 e += "\nFormat cannot be empty";
                 throw e;
             }
