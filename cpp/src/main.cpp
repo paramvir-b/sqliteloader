@@ -712,19 +712,24 @@ string getInsertQuery(Layout & layout) {
 // building insert table query
     int fieldCounter = 0;
 
-    string insertBindQry;
-    insertBindQry = "INSERT INTO '" + layout.name + "' VALUES ( ";
+    string columnQry = " (";
+    string valueQry = " VALUES ( ";
     for (int i = 0; i < layout.fieldListLen; i++) {
         Field &field = layout.fieldList[i];
         if (field.isSkip != 1) {
-            insertBindQry += "?";
+            columnQry += "'" + field.name + "'";
+            valueQry += "?";
             if (fieldCounter < layout.fieldListLen - 1) {
-                insertBindQry += ", ";
+                columnQry += ", ";
+                valueQry += ", ";
             }
         }
         fieldCounter++;
     }
-    insertBindQry += ");";
+    columnQry += ")";
+    valueQry += ")";
+    string insertBindQry;
+    insertBindQry = "INSERT INTO '" + layout.name + "'" + columnQry + valueQry + ";";
     return insertBindQry;
 }
 
