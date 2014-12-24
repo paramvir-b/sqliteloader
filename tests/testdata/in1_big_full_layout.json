@@ -2,6 +2,28 @@
   "name": "in",
   "type": "csv",
   "separator": "",
+  "indexList": [
+    {
+      "columnList": [
+        {
+          "name": "rid1"
+        },
+        {
+          "name": "rid2"
+        }
+      ]
+    },
+    {
+      "columnList": [
+        {
+          "name": "rid2"
+        },
+        {
+          "name": "rid3"
+        }
+      ]
+    }
+  ],
   "fieldList": [
     {
       "name": "miss1",

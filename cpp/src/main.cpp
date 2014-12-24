@@ -97,29 +97,105 @@ struct Field {
     }
 };
 
+struct IndexColumn {
+    string name;
+    string query;
+    IndexColumn(const string name) :
+            query("") {
+        if (name.length() < 1) {
+            throw string("Index column name cannot be empty.");
+        }
+        this->name = name;
+    }
+
+    IndexColumn(const string name, const string query) {
+        if (name.length() < 1) {
+            throw string("Index column name cannot be empty.");
+        }
+        this->name = name;
+        this->query = query;
+    }
+
+    friend ostream& operator<<(ostream &outStream, IndexColumn &indexColumn) {
+        outStream << "[ " << "name=" << indexColumn.name << ", query="
+                << indexColumn.query << " ]";
+        return outStream;
+    }
+};
+
+struct Index {
+    string name;
+    bool isUnique;
+    vector<IndexColumn> indexColumnList;
+    string whereClause;
+    Index() :
+            name(""), isUnique(true), whereClause("") {
+    }
+
+    Index(bool isUnique, string whereClause) {
+        this->isUnique = isUnique;
+        this->whereClause = whereClause;
+    }
+
+    void setIndexName(const string name) {
+        this->name = name;
+    }
+
+    void addIndexColumn(IndexColumn ic) {
+        indexColumnList.push_back(ic);
+    }
+
+    friend ostream& operator<<(ostream &outStream, Index &index) {
+        outStream << "[ " << "name=" << index.name << ", whereClause="
+                << index.whereClause;
+        outStream << ", indexColumnList(" << index.indexColumnList.size()
+                << ")=[ ";
+        for (int i = 0; i < index.indexColumnList.size(); i++) {
+            outStream << index.indexColumnList[i] << ", ";
+        }
+        outStream << " ]";
+        outStream << " ]";
+        return outStream;
+    }
+
+    ~Index() {
+    }
+};
+
 struct Layout {
     string name;
+    vector<Index> indexList;
     Field *fieldList;
     int fieldListLen;
     char type;
     char separator;
 
-    Layout(const int size) :
+    Layout(const int fieldListSize) :
             type('D'), separator('\t') {
-        fieldList = new Field[size];
-        fieldListLen = size;
+        fieldList = new Field[fieldListSize];
+        fieldListLen = fieldListSize;
     }
 
     ~Layout() {
         delete[] fieldList;
     }
 
+    void addIndex(Index index) {
+        indexList.push_back(index);
+    }
+
     friend ostream& operator<<(ostream &outStream, Layout &layout) {
-        outStream << "[ " << "name=" << layout.name << ", type=" << layout.type
-                << ", fieldList=";
+        outStream << "[ " << "name=" << layout.name << ", type=" << layout.type;
+        outStream << ", indexList(" << layout.indexList.size() << ")=[ ";
+        for (int i = 0; i < layout.indexList.size(); i++) {
+            outStream << layout.indexList[i] << ", ";
+        }
+        outStream << " ]";
+        outStream << ", fieldList=[ ";
         for (int i = 0; i < layout.fieldListLen; i++) {
             outStream << layout.fieldList[i] << ", ";
         }
+        outStream << " ]";
         outStream << " ]";
         return outStream;
     }
@@ -522,12 +598,15 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
      if(isDebug) cout<<"fileType="<<fileType<<endl;
      */
     cJSON *fieldList = cJSON_GetObjectItem(root, "fieldList");
+    cJSON *jIndexList = cJSON_GetObjectItem(root, "indexList");
 
 // building create table query
 // TODO  extract table name from file name or something
     int recordLen = 0;
     int fieldCounter = 0;
     int fieldListCount = cJSON_GetArraySize(fieldList);
+    int indexListCount =
+            jIndexList != NULL ? cJSON_GetArraySize(jIndexList) : 0;
 
 // TODO If we need to give default name. In future may be
 // string tableName = "t";
@@ -559,6 +638,68 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
         if (jSeparator != NULL && strlen(jSeparator->valuestring) > 0) {
             pLayout->separator = jSeparator->valuestring[0];
         }
+    }
+
+    // Parse index part of layout
+    char str[20];
+    for (int i = 0; i < indexListCount; i++) {
+        cJSON *jIndex = cJSON_GetArrayItem(jIndexList, i);
+        string preferredIndexName =
+                cJSON_GetObjectItem(jIndex, "name") != NULL ?
+                        cJSON_GetObjectItem(jIndex, "name")->valuestring : "";
+        string isUniqueStr =
+                cJSON_GetObjectItem(jIndex, "isUnique") != NULL ?
+                        cJSON_GetObjectItem(jIndex, "isUnique")->valuestring :
+                        "";
+        bool isUnique = false;
+        isUnique = strcmp(isUniqueStr.c_str(), "true") == 0;
+        string whereClause =
+                cJSON_GetObjectItem(jIndex, "where") != NULL ?
+                        cJSON_GetObjectItem(jIndex, "where")->valuestring : "";
+        cJSON *jColumnList = cJSON_GetObjectItem(jIndex, "columnList");
+        int columnListLen = cJSON_GetArraySize(jColumnList);
+
+        Index *idx = new Index(isUnique, whereClause);
+
+        string genIndexName = "IDX_" + pLayout->name;
+        for (int j = 0; j < columnListLen; j++) {
+            cJSON *jIndexColumn = cJSON_GetArrayItem(jColumnList, i);
+            string columnName =
+                    cJSON_GetObjectItem(jIndexColumn, "name") != NULL ?
+                            cJSON_GetObjectItem(jIndexColumn, "name")->valuestring :
+                            "";
+            string query =
+                    cJSON_GetObjectItem(jIndexColumn, "query") != NULL ?
+                            cJSON_GetObjectItem(jIndexColumn, "query")->valuestring :
+                            "";
+            if (columnName.length() < 1) {
+                char str[20];
+                sprintf(str, "%d", (j + 1));
+                string errStr = "Index column name cannot be empty at index ";
+                errStr += str;
+                sprintf(str, "%d", (i + 1));
+                errStr += " of index definition index at ";
+                errStr += str;
+                errStr += " indexName=";
+                errStr += idx->name;
+                throw errStr;
+            }
+            genIndexName += "_" + columnName;
+            IndexColumn *ic = new IndexColumn(columnName, query);
+            idx->addIndexColumn(*ic);
+        }
+        sprintf(str, "%d", (i + 1));
+        genIndexName += "_";
+        genIndexName += str;
+
+        if (preferredIndexName.length() > 0) {
+            idx->setIndexName(preferredIndexName);
+        } else {
+            idx->setIndexName(genIndexName);
+        }
+
+        pLayout->addIndex(*idx);
+
     }
 
     for (int i = 0; i < fieldListCount; i++) {
@@ -729,7 +870,8 @@ string getInsertQuery(Layout & layout) {
     columnQry += ")";
     valueQry += ")";
     string insertBindQry;
-    insertBindQry = "INSERT INTO '" + layout.name + "'" + columnQry + valueQry + ";";
+    insertBindQry = "INSERT INTO '" + layout.name + "'" + columnQry + valueQry
+            + ";";
     return insertBindQry;
 }
 
@@ -812,6 +954,55 @@ int createIndex(sqlite3 *db, const Layout& layout, string indexOnFieldName) {
     string indexQry = "CREATE INDEX '" + layout.name + "_" + indexOnFieldName
             + "_index' ON '" + layout.name + "' ('" + layout.fieldList[0].name
             + "');";
+
+    rc = sqlite3_exec(db, indexQry.c_str(), NULL, NULL, &zErrMsg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "indexQry: %s\n", indexQry.c_str());
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+#endif
+    return 0;
+}
+
+int createIndex(sqlite3 *db, const string tableName, const Index& index,
+        const bool isDebug) {
+#ifndef DISABLE_SQL_CODE
+    int rc;
+    char *zErrMsg = 0;
+
+    string indexQry = "CREATE";
+
+    if (index.isUnique) {
+        indexQry += " UNIQUE";
+    }
+    indexQry += " INDEX '" + index.name + "' ON '" + tableName + "' (";
+
+    int indexColListLen = index.indexColumnList.size();
+    for (int i = 0; i < indexColListLen; i++) {
+        IndexColumn ic = index.indexColumnList[i];
+        indexQry += "'";
+        indexQry += ic.name;
+        indexQry += "'";
+        if (ic.query.length() > 0) {
+            indexQry += " ";
+            indexQry += ic.query;
+        }
+        if (i + 1 < indexColListLen) {
+            indexQry += ", ";
+        }
+    }
+    indexQry += ")";
+
+    if (index.whereClause.length() > 0) {
+        indexQry += " ";
+        indexQry += index.whereClause;
+    }
+    indexQry += ";";
+
+    if (isDebug) {
+        cout << "IndexQry=" << indexQry << endl;
+    }
 
     rc = sqlite3_exec(db, indexQry.c_str(), NULL, NULL, &zErrMsg);
     if (rc != SQLITE_OK) {
@@ -1172,13 +1363,30 @@ int main(int argc, char **argv) {
         sqlite3_free(zErrMsg);
     }
     long insertTimeInSecs = time(NULL) - cInsertStartTime;
-    printf("Inserted %ld records in %ld seconds with %.2f opts/sec \n",
-            recordCounter, insertTimeInSecs,
-            ((double) recordCounter / insertTimeInSecs));
+    if (isDebug) {
+        printf("Inserted %ld records in %ld seconds with %.2f opts/sec \n",
+                recordCounter, insertTimeInSecs,
+                ((double) recordCounter / insertTimeInSecs));
+    }
 
     rc = sqlite3_finalize(sqlStmt);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error %d: reset failed\n", rc);
+    }
+
+    vector<Index> indexList = pLayout->indexList;
+
+    for (int i = 0; i < indexList.size(); i++) {
+        time_t cIndexStartTime;
+        cIndexStartTime = time(NULL);
+
+        createIndex(db, pLayout->name, pLayout->indexList[i], isDebug);
+        long indexTimeInSecs = time(NULL) - cIndexStartTime;
+        if (isDebug) {
+            printf("Indexed %ld records in %ld seconds with %.2f opts/sec \n",
+                    recordCounter, indexTimeInSecs,
+                    ((double) recordCounter / indexTimeInSecs));
+        }
     }
 
 //    time_t cIndexStartTime;
@@ -1200,9 +1408,12 @@ int main(int argc, char **argv) {
 #endif
     long timeInSecs = time(NULL) - cStartTime;
 // printf("Imported %ld records in %4.2f seconds with %.2f opts/sec \n", recordCounter, timeInSecs, recordCounter/timeInSecs);
-    printf("Imported %ld records in %ld seconds with %.2f opts/sec \n",
-            recordCounter, timeInSecs, ((double) recordCounter / timeInSecs));
-    printf("DB file is at: %s\n", dbFileName.c_str());
+    if (isDebug) {
+        printf("Imported %ld records in %ld seconds with %.2f opts/sec \n",
+                recordCounter, timeInSecs,
+                ((double) recordCounter / timeInSecs));
+        printf("DB file is at: %s\n", dbFileName.c_str());
+    }
     delete pLayout;
     inFile.close();
 }
