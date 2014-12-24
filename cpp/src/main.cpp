@@ -901,8 +901,9 @@ int checkIfTableExist(sqlite3 *db, string tableNameToCheck) {
 #ifndef DISABLE_SQL_CODE
     int rc;
     sqlite3_stmt *sqlStmt;
+    tableNameToCheck = to_lower_copy(tableNameToCheck);
     string queryStr =
-            "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='"
+            "SELECT count(name) FROM sqlite_master WHERE type='table' AND lower(name)='"
                     + tableNameToCheck + "'";
     rc = sqlite3_prepare_v2(db, queryStr.c_str(), queryStr.length(), &sqlStmt,
     NULL);
