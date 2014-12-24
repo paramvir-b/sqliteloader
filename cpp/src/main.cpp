@@ -11,6 +11,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <algorithm>
 
 #include "sqlite3.h"
 #ifndef DISABLE_SQL_CODE
@@ -23,6 +24,12 @@ using namespace std;
 using optparse::OptionParser;
 
 #define ENABLE_SQL_CHECKS
+
+string to_lower_copy(string str) {
+    string newStr = str;
+    transform(newStr.begin(), newStr.end(), newStr.begin(), ::tolower);
+    return newStr;
+}
 
 string get_file_contents(string filename) {
     ifstream in;
@@ -572,7 +579,8 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
 //   return pData;
 }
 
-Layout * parseLayout(string layoutFileName, string argTableName) {
+Layout * parseLayout(string layoutFileName, string argTableName,
+        bool isRetainCase) {
 // parsing json
     string json_str = get_file_contents(layoutFileName);
 
@@ -631,7 +639,11 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
     }
 
     Layout *pLayout = new Layout(fieldListCount);
-    pLayout->name = tableName;
+    if (isRetainCase) {
+        pLayout->name = tableName;
+    } else {
+        pLayout->name = to_lower_copy(tableName);
+    }
 
     if (pLayout->type == 'D') {
         cJSON *jSeparator = cJSON_GetObjectItem(root, "separator");
@@ -698,6 +710,9 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
             idx->setIndexName(genIndexName);
         }
 
+        if (!isRetainCase) {
+            idx->setIndexName(to_lower_copy(idx->name));
+        }
         pLayout->addIndex(*idx);
 
     }
@@ -710,7 +725,12 @@ Layout * parseLayout(string layoutFileName, string argTableName) {
             throw string("Name cannot be empty");
         }
 
-        pLayout->fieldList[i].name = jsonFieldName->valuestring;
+        if (isRetainCase) {
+            pLayout->fieldList[i].name = jsonFieldName->valuestring;
+        } else {
+            pLayout->fieldList[i].name = to_lower_copy(
+                    jsonFieldName->valuestring);
+        }
 
         cJSON *jsonIsSkip = cJSON_GetObjectItem(jsonField, "isSkip");
         if (jsonIsSkip != NULL) {
@@ -911,17 +931,21 @@ int checkIfTableExist(sqlite3 *db, string tableNameToCheck) {
     return doesTableExist;
 }
 
-void createTable(sqlite3 *db, Layout &layout) {
+void createTable(sqlite3 *db, Layout &layout, bool isDebug) {
 
 #ifndef DISABLE_SQL_CODE
     int rc;
     char *zErrMsg = 0;
 
-    rc = sqlite3_exec(db, getCreateTableQuery(layout).c_str(), NULL, 0,
-            &zErrMsg);
+    string createTableQry = getCreateTableQuery(layout);
+
+    if (isDebug) {
+        cout << "createTableQry=" << createTableQry << endl;
+    }
+
+    rc = sqlite3_exec(db, createTableQry.c_str(), NULL, 0, &zErrMsg);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Create query=%s\n",
-                getCreateTableQuery(layout).c_str());
+        fprintf(stderr, "Create query=%s\n", createTableQry.c_str());
         fprintf(stderr, "SQL error for create table: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
         throw string("Error occurred creating table");
@@ -929,16 +953,20 @@ void createTable(sqlite3 *db, Layout &layout) {
 #endif
 }
 
-void deleteTable(sqlite3 *db, Layout &layout) {
+void deleteTable(sqlite3 *db, Layout &layout, bool isDebug) {
 
 #ifndef DISABLE_SQL_CODE
     int rc;
     char *zErrMsg = 0;
 
-    string query = "DROP table '" + layout.name + "'";
-    rc = sqlite3_exec(db, query.c_str(), NULL, 0, &zErrMsg);
+    string delQuery = "DROP table '" + layout.name + "'";
+    if (isDebug) {
+        cout << "delQuery=" << delQuery << endl;
+    }
+
+    rc = sqlite3_exec(db, delQuery.c_str(), NULL, 0, &zErrMsg);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Delete query=%s\n", query.c_str());
+        fprintf(stderr, "Delete query=%s\n", delQuery.c_str());
         fprintf(stderr, "SQL error for delete table: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
         throw string("Error occurred deleting table");
@@ -1157,7 +1185,7 @@ int main(int argc, char **argv) {
 
     Layout *pLayout;
     try {
-        pLayout = parseLayout(layoutFileName, argTableName);
+        pLayout = parseLayout(layoutFileName, argTableName, false);
     } catch (string& e) {
         cout << "\nError Occurred: " << e << endl;
         return 1;
@@ -1218,19 +1246,19 @@ int main(int argc, char **argv) {
 
     try {
         if (doesTableExist == 0 && isAppendMode) {
-            createTable(db, *pLayout);
+            createTable(db, *pLayout, isDebug);
         } else
 
         if (doesTableExist == 0 && isDeleteMode) {
-            createTable(db, *pLayout);
+            createTable(db, *pLayout, isDebug);
         } else
 
         if (doesTableExist == 1 && isDeleteMode) {
-            deleteTable(db, *pLayout);
-            createTable(db, *pLayout);
+            deleteTable(db, *pLayout, isDebug);
+            createTable(db, *pLayout, isDebug);
         } else if (doesTableExist == 1 && isAppendMode) {
         } else {
-            createTable(db, *pLayout);
+            createTable(db, *pLayout, isDebug);
         }
     } catch (string& e) {
         cout << e << endl;
@@ -1284,6 +1312,9 @@ int main(int argc, char **argv) {
     sqlite3_stmt *sqlStmt;
 #ifndef DISABLE_SQL_CODE
     string insertBindQry = getInsertQuery(*pLayout);
+    if (isDebug) {
+        cout << "insertBindQry=" << insertBindQry << endl;
+    }
     rc = sqlite3_prepare_v2(db, insertBindQry.c_str(), insertBindQry.length(),
             &sqlStmt, NULL);
     if (rc != SQLITE_OK) {
