@@ -1138,6 +1138,8 @@ OptionParser createParser() {
             "Append to existing table if it does exist");
     parser.add_option("-v").dest("v").set_default("0").action("store_true").help(
             "Debug mode");
+    parser.add_option("-s").dest("s").set_default("0").action("store_true").help(
+            "Show stats");
     parser.add_option("-p").dest("p").metavar("<comma-separated-pragma-list>").help(
             "Comma separated pragma which ran before creation of DB.");
 
@@ -1159,6 +1161,7 @@ int main(int argc, char **argv) {
     string argTableName = options["t"];
     long commitAfter = atol(options["c"].c_str());
     bool isDebug = atoi(options["v"].c_str()) == 1 ? true : false;
+    bool isShowStats = atoi(options["s"].c_str()) == 1 ? true : false;
     bool isAppendMode = atoi(options["a"].c_str()) == 1 ? true : false;
     bool isDeleteMode = atoi(options["d"].c_str()) == 1 ? true : false;
     string pragmaList = options["p"];
@@ -1180,8 +1183,12 @@ int main(int argc, char **argv) {
         cout << "layoutFileName=" << layoutFileName << endl;
         cout << "inputFileName=" << inputFileName << endl;
         cout << "outputFileName=" << outputFileName << endl;
+        cout << "argTableName=" << argTableName << endl;
         cout << "commitAfter=" << commitAfter << endl;
         cout << "isDebug=" << isDebug << endl;
+        cout << "isShowStats=" << isShowStats << endl;
+        cout << "isAppendMode=" << isAppendMode << endl;
+        cout << "isDeleteMode=" << isDeleteMode << endl;
     }
 
     Layout *pLayout;
@@ -1395,7 +1402,7 @@ int main(int argc, char **argv) {
         sqlite3_free(zErrMsg);
     }
     long insertTimeInSecs = time(NULL) - cInsertStartTime;
-    if (isDebug) {
+    if (isShowStats) {
         printf("Inserted %ld records in %ld seconds with %.2f opts/sec \n",
                 recordCounter, insertTimeInSecs,
                 ((double) recordCounter / insertTimeInSecs));
@@ -1414,7 +1421,7 @@ int main(int argc, char **argv) {
 
         createIndex(db, pLayout->name, pLayout->indexList[i], isDebug);
         long indexTimeInSecs = time(NULL) - cIndexStartTime;
-        if (isDebug) {
+        if (isShowStats) {
             printf("Indexed %ld records in %ld seconds with %.2f opts/sec \n",
                     recordCounter, indexTimeInSecs,
                     ((double) recordCounter / indexTimeInSecs));
@@ -1440,12 +1447,13 @@ int main(int argc, char **argv) {
 #endif
     long timeInSecs = time(NULL) - cStartTime;
 // printf("Imported %ld records in %4.2f seconds with %.2f opts/sec \n", recordCounter, timeInSecs, recordCounter/timeInSecs);
-    if (isDebug) {
+    if (isShowStats) {
         printf("Imported %ld records in %ld seconds with %.2f opts/sec \n",
                 recordCounter, timeInSecs,
                 ((double) recordCounter / timeInSecs));
         printf("DB file is at: %s\n", dbFileName.c_str());
     }
+    printf("RecordInserted=%ld", recordCounter);
     delete pLayout;
     inFile.close();
 }
