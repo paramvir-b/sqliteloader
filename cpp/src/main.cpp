@@ -697,6 +697,10 @@ Layout * parseLayout(string layoutFileName, string argTableName,
                 throw errStr;
             }
             genIndexName += "_" + columnName;
+            if (!isRetainCase) {
+                columnName = to_lower_copy(columnName);
+                query = to_lower_copy(query);
+            }
             IndexColumn *ic = new IndexColumn(columnName, query);
             idx->addIndexColumn(*ic);
         }
