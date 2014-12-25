@@ -674,8 +674,8 @@ Layout * parseLayout(string layoutFileName, string argTableName,
         Index *idx = new Index(isUnique, whereClause);
 
         string genIndexName = "IDX_" + pLayout->name;
-        for (int j = 0; j < columnListLen; j++) {
-            cJSON *jIndexColumn = cJSON_GetArrayItem(jColumnList, i);
+        for (int colI = 0; colI < columnListLen; colI++) {
+            cJSON *jIndexColumn = cJSON_GetArrayItem(jColumnList, colI);
             string columnName =
                     cJSON_GetObjectItem(jIndexColumn, "name") != NULL ?
                             cJSON_GetObjectItem(jIndexColumn, "name")->valuestring :
@@ -686,7 +686,7 @@ Layout * parseLayout(string layoutFileName, string argTableName,
                             "";
             if (columnName.length() < 1) {
                 char str[20];
-                sprintf(str, "%d", (j + 1));
+                sprintf(str, "%d", (colI + 1));
                 string errStr = "Index column name cannot be empty at index ";
                 errStr += str;
                 sprintf(str, "%d", (i + 1));
