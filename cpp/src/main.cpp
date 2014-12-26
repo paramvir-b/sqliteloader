@@ -1457,6 +1457,7 @@ int main(int argc, char **argv) {
                 ((double) recordCounter / timeInSecs));
         printf("DB file is at: %s\n", dbFileName.c_str());
     }
+    printf("TableCreated=%s", pLayout->name.c_str());
     printf("RecordInserted=%ld", recordCounter);
     delete pLayout;
     inFile.close();
