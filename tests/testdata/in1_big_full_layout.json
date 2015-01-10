@@ -62,7 +62,8 @@
       "type": "integer"
     },
     {
-      "name": "name1"
+      "name": "name1",
+      "isTrim": "false"
     },
     {
       "name": "name2"

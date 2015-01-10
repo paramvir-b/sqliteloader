@@ -85,11 +85,12 @@ struct Field {
     string format;
     int pivotYear;
     string *missingValue;
+    int isTrim;
     int endOffSet;
     Field() :
             layoutPtr(NULL), isSkip(0), type('S'), length(0), format(""), pivotYear(
                     -1), missingValue(
-            NULL), endOffSet(0) {
+            NULL), isTrim(1), endOffSet(0) {
     }
 
     friend ostream& operator<<(ostream &outStream, Field &field) {
@@ -98,8 +99,8 @@ struct Field {
                 << ", format=" << field.format << ", pivotYear="
                 << field.pivotYear << ", missingValue="
                 << (field.missingValue == NULL ?
-                        "NULL" : field.missingValue->c_str()) << ", endOffSet="
-                << field.endOffSet << " ]";
+                        "NULL" : field.missingValue->c_str()) << ", isTrim="
+                << field.isTrim << ", endOffSet = " << field.endOffSet << " ]";
         return outStream;
     }
 };
@@ -322,10 +323,46 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
 //        cout << "value='" << fieldStart + nonSpaceStartIndex << "' after"
 //                << endl;
 
+// First check if missing then bind it to null
         if (field.missingValue != NULL
                 && strcmp(fieldStart, field.missingValue->c_str()) == 0) {
-            nonSpaceStartIndex = -1;
+#ifndef DISABLE_SQL_CODE
+#    ifndef ENABLE_SQL_CHECKS
+            sqlite3_bind_null(sqlStmt, bindFieldCounter);
+#    else
+            rc = sqlite3_bind_null(sqlStmt, bindFieldCounter);
+            if (rc != SQLITE_OK) {
+                fprintf(stderr, "SQL error %d: text null binding failed\n", rc);
+                return 1;
+            }
+#    endif
+#endif
+            indexInLine += fieldLength + 1;
+            continue;
         }
+
+        // If it is as string and no trimming required
+        if (field.type == 'S' && field.isTrim == 0) {
+#ifndef DISABLE_SQL_CODE
+#    ifndef ENABLE_SQL_CHECKS
+            sqlite3_bind_text(sqlStmt, bindFieldCounter, fieldStart,
+                    fieldLength,
+                    SQLITE_TRANSIENT);
+#    else
+            rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, fieldStart,
+                    fieldLength,
+                    SQLITE_TRANSIENT);
+            if (rc != SQLITE_OK) {
+                fprintf(stderr, "SQL error %d: text binding failed\n", rc);
+                return 1;
+            }
+#    endif
+#endif
+            indexInLine += fieldLength + 1;
+            continue;
+        }
+
+        // Looks like the whole string is filled with spaces so bind with null
         if (nonSpaceStartIndex == -1) {
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
@@ -373,10 +410,8 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                 strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%d", &tm);
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
-                sqlite3_bind_text(sqlStmt, bindFieldCounter,
-                        datestring,
-                        10,
-                        SQLITE_TRANSIENT);
+                sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring, 10,
+                SQLITE_TRANSIENT);
 #    else
                 rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
                         10,
@@ -403,14 +438,13 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                         &tm);
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
-                sqlite3_bind_text(sqlStmt, bindFieldCounter,
-                        datestring,
-                        MAX_DATE_STRING_LEN,
-                        SQLITE_TRANSIENT);
-#    else
-                rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
+                sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
                 MAX_DATE_STRING_LEN,
                 SQLITE_TRANSIENT);
+#    else
+                rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
+                        MAX_DATE_STRING_LEN,
+                        SQLITE_TRANSIENT);
 
                 if (rc != SQLITE_OK) {
                     fprintf(stderr, "SQL error %d: text binding failed\n", rc);
@@ -508,7 +542,8 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
                 // Found something to bind
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
-                sqlite3_bind_text(sqlStmt, fieldCounter + 1, lineStr + start, len, SQLITE_TRANSIENT);
+                sqlite3_bind_text(sqlStmt, fieldCounter + 1, lineStr + start,
+                        len, SQLITE_TRANSIENT);
 #    else
                 rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1,
                         lineStr + start, len, SQLITE_TRANSIENT);
@@ -561,7 +596,8 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
                 // infinity we specified in the schema. Also it does that without any loss to
                 // real numbers
 #    ifndef ENABLE_SQL_CHECKS
-                sqlite3_bind_text(sqlStmt, fieldCounter + 1, lineStr + start, len, SQLITE_TRANSIENT);
+                sqlite3_bind_text(sqlStmt, fieldCounter + 1, lineStr + start,
+                        len, SQLITE_TRANSIENT);
 #    else
                 rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1,
                         lineStr + start, len, SQLITE_TRANSIENT);
@@ -750,6 +786,25 @@ Layout * parseLayout(string layoutFileName, string argTableName,
                 string errStr = "Invalid value='";
                 errStr += jsonIsSkip->valuestring;
                 errStr += "' for isSkip at field number=";
+                errStr += str;
+                throw errStr;
+            }
+        }
+
+        cJSON *jsonIsTrim = cJSON_GetObjectItem(jsonField, "isTrim");
+        if (jsonIsTrim != NULL) {
+            if (strcmp(jsonIsTrim->valuestring, "true") == 0) {
+                pLayout->fieldList[i].isTrim = 1;
+                continue;
+            } else if (strcmp(jsonIsTrim->valuestring, "false") == 0) {
+                pLayout->fieldList[i].isTrim = 0;
+                continue;
+            } else {
+                char str[20];
+                sprintf(str, "%d", (i + 1));
+                string errStr = "Invalid value='";
+                errStr += jsonIsTrim->valuestring;
+                errStr += "' for isTrim at field number=";
                 errStr += str;
                 throw errStr;
             }
@@ -1132,6 +1187,8 @@ string getLayoutHelp() {
                     "\n              Example: 2000"
                     "\n   missingValue: If this is the value then it will be replaced with null in db"
                     "\n              Example: 2000"
+                    "\n   isSkip   : If true, this field is skipped while parsing the input file. Default is false"
+                    "\n   isTrim   : If type is text, then if falfe, this field is NOT trimmed. Default is true"
 //            "\n   length : Any integer number. Length for a given field. Only valid for flat files"
 //            "\n            Example: 7"
                     "\n Index Definition Parameters:"

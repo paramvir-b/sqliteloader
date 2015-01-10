@@ -56,12 +56,11 @@ run_sqlite_loader() {
         fi
     fi
 
-    ln -s ../../cpp/bin/sqliteloader sqliteloader
     echo outputFile=$outputFile
 
     rm -f $outputFile;
-    echo time ./sqliteloader -l $layoutFile -i $inputFile -t t -o $outputFile
-    time ./sqliteloader -l $layoutFile -i $inputFile -t t -o $outputFile
+    echo time ./sqliteloader -v -l $layoutFile -i $inputFile -t t -o $outputFile
+    time ./sqliteloader -v -l $layoutFile -i $inputFile -t t -o $outputFile
 
     if [[ -e $expOutputFile ]]; then
         echo "Comparing $outputFile against expected file : $expOutputFile"
@@ -95,7 +94,7 @@ run_for_type() {
 
 WORK_DIR=./out
 LOAD_DIR=./load
-forceCreate=$1
+forceCreate=${1:-false}
 
 rm -rf $WORK_DIR
 mkdir -p $WORK_DIR
