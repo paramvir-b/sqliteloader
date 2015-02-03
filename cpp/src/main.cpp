@@ -1285,21 +1285,28 @@ int main(int argc, char **argv) {
     if (isDebug)
         cout << *pLayout << endl;
 
-    istream *inStream;
-    ifstream inFile;
+//    istream *inStream;
+    FILE *inStream;
+//    ifstream inFile;
+    FILE *fp;
 
     if (inputFileName.empty() || inputFileName.compare("-") == 0) {
         // Disable the sync to improve performance.
         // NOTE: Make sure we don't use C like I/O going forward.
-        cin.sync_with_stdio(false);
-        inStream = &cin;
+//        cin.sync_with_stdio(false);
+//        inStream = &cin;
+        inStream = stdin;
         if (isDebug)
             cout << "Reading from stdin" << endl;
     } else {
         if (isDebug)
             cout << "Reading from " << inputFileName << endl;
-        inFile.open(inputFileName.c_str());
-        inStream = &inFile;
+//        inFile.open(inputFileName.c_str());
+        fp = fopen(inputFileName.c_str(), "r");
+        if (fp == NULL)
+            return 1;
+//        inStream = &inFile;
+        inStream = fp;
     }
 
     string dbFileName;
@@ -1415,7 +1422,7 @@ int main(int argc, char **argv) {
     }
 #endif
 
-    string line;
+//    string line;
 
     long recordCounter = 0;
     int index = 0;
@@ -1423,7 +1430,11 @@ int main(int argc, char **argv) {
     char *lineStr = NULL;
 //    Data *pData = new Data[fieldListCount];
     long commitCounter = 0;
-    while (getline(*inStream, line)) {
+    char * line = NULL;
+    size_t len = 0;
+    ssize_t read;
+//    while (getline(*inStream, line)) {
+    while ((read = getline(&lineStr, &len, fp)) != -1) {
 
         /*
          // if(isDebug) cout<<"line="<<line<<endl;
@@ -1431,10 +1442,16 @@ int main(int argc, char **argv) {
          // insertQry = "INSERT INTO " + tableName + " VALUES (";
          */
         index = 0;
-        lineStr = (char *) line.c_str();
+//        lineStr = (char *) line.c_str();
         // cout<<lineStr<<endl;
         //parseFixedLenRecord(layout, lineStr, sqlStmt);
-        parseDelimRecord(*pLayout, NULL, lineStr, line.length(), sqlStmt);
+//        parseDelimRecord(*pLayout, NULL, lineStr, line.length(), sqlStmt);
+        if(*(lineStr + read - 1) == '\n') {
+            *(lineStr + read - 1) = 0;
+            read--;
+        }
+
+        parseDelimRecord(*pLayout, NULL, lineStr, read, sqlStmt);
 
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
@@ -1539,6 +1556,9 @@ int main(int argc, char **argv) {
     printf("TableCreated=%s\n", pLayout->name.c_str());
     printf("RecordInserted=%ld\n", recordCounter);
     delete pLayout;
-    inFile.close();
+//    inFile.close();
+    if(fp != NULL) {
+        fclose(fp);
+    }
 }
 
