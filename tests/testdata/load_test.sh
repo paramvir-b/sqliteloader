@@ -60,7 +60,7 @@ run_sqlite_loader() {
 
     rm -f $outputFile;
     echo time ./sqliteloader -v -l $layoutFile -i $inputFile -t t -o $outputFile
-    time ./sqliteloader -v -l $layoutFile -i $inputFile -t t -o $outputFile
+    time ./sqliteloader -v -s -l $layoutFile -i $inputFile -t t -o $outputFile
 
     if [[ -e $expOutputFile ]]; then
         echo "Comparing $outputFile against expected file : $expOutputFile"
