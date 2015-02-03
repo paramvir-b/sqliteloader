@@ -23,7 +23,7 @@ CC_LIBS=-lsqlite3
 
 OBJECT_MODE=64
 CC=g++
-CFLAGS=-g -m$(OBJECT_MODE) -I$(CC_INC_DIR)
+CFLAGS+=-g -m$(OBJECT_MODE) -I$(CC_INC_DIR)
 LDFLAGS=-g -m$(OBJECT_MODE) $(CC_LIB_DIR)
 
 
@@ -32,7 +32,7 @@ all: $(EXE)
 
 $(EXE): $(OBJS) Makefile
 	-$(MKDIR) -p bin
-	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(CC_LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(CC_LIBS)
 
 .c.o: $(INCS) $(SRCS) Makefile
 	-$(ECHO) $(OBJS)
