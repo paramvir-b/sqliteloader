@@ -411,7 +411,7 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
                 sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring, 10,
-                SQLITE_TRANSIENT);
+                        SQLITE_TRANSIENT);
 #    else
                 rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
                         10,
@@ -439,12 +439,12 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
                 sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
-                MAX_DATE_STRING_LEN,
-                SQLITE_TRANSIENT);
-#    else
-                rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
                         MAX_DATE_STRING_LEN,
                         SQLITE_TRANSIENT);
+#    else
+                rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
+                MAX_DATE_STRING_LEN,
+                SQLITE_TRANSIENT);
 
                 if (rc != SQLITE_OK) {
                     fprintf(stderr, "SQL error %d: text binding failed\n", rc);
@@ -456,6 +456,247 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
         }
 
         indexInLine += fieldLength + 1;
+    }
+    return 0;
+//   return pData;
+}
+
+struct Buffer {
+#define BUFFER_MAX_SIZE 102400
+    FILE *fp;
+    int eofFlag;
+    int bufferSize;
+    char buffer[BUFFER_MAX_SIZE];
+    int bufferIndex;
+    static const int fieldSize = BUFFER_MAX_SIZE;
+    char fieldStr[fieldSize];
+    Buffer() :
+            eofFlag(0), bufferSize(BUFFER_MAX_SIZE), fp(NULL), bufferIndex(
+                    BUFFER_MAX_SIZE) {
+
+    }
+};
+
+int parseDelimRecord(Layout &layout, void *pInfo, Buffer *buffer,
+        int lineStrLen, sqlite3_stmt *sqlStmt) {
+#define MAX_DATE_STRING_LEN 20
+    static char datestring[MAX_DATE_STRING_LEN];
+    DelimFileData *pDelimInfo = (DelimFileData *) pInfo;
+//char separator = pDelimInfo->separator;
+    char separator = layout.separator;
+#ifndef DISABLE_SQL_CODE
+    int rc;
+#endif
+    struct tm tm;
+//    printf("bufferIndex=%d\n", buffer->bufferIndex);
+    char ch = 0;
+    char *fieldStart = buffer->fieldStr;
+    int fieldLength;
+    int ti;
+    int nonSpaceStartIndex;
+    int nonSpaceEndIndex;
+    size_t readCount = 0;
+
+//    int indexInLine = 0;
+    int fieldListCount = layout.fieldListLen;
+    for (int fieldCounter = 0, bindFieldCounter = 0;
+            fieldCounter < fieldListCount; fieldCounter++) {
+        Field &field = layout.fieldList[fieldCounter];
+//        char *fieldStart = lineStr + indexInLine;
+        fieldLength = 0;
+        ti = 0;
+        nonSpaceStartIndex = -1;
+        nonSpaceEndIndex = -1;
+        if (ch == '\n') {
+            break;
+        }
+        do {
+            if (buffer->bufferIndex >= buffer->bufferSize) {
+                buffer->bufferIndex = 0;
+                if (buffer->eofFlag == 1 || feof(buffer->fp)) {
+                    buffer->eofFlag = 1;
+                    buffer->bufferSize = 0;
+                    buffer->buffer[0] = EOF;
+                } else {
+                    readCount = fread(buffer->buffer, 1, buffer->bufferSize,
+                            buffer->fp);
+                    buffer->bufferSize = readCount;
+                }
+            }
+            buffer->fieldStr[ti] = ch = buffer->buffer[buffer->bufferIndex];
+            buffer->bufferIndex++;
+            if (ch != ' ' && nonSpaceStartIndex == -1) {
+                nonSpaceStartIndex = ti;
+            }
+            if (ch == separator || ch == '\n' || ch == EOF) {
+                buffer->fieldStr[ti] = 0;
+                break;
+            }
+            fieldLength++;
+            ti++;
+
+        } while (true);
+
+        if (buffer->eofFlag == 1 && fieldLength == 0) {
+            return -1;
+        }
+        if (field.isSkip == 1) {
+            //            indexInLine += fieldLength + 1;
+            continue;
+        }
+        bindFieldCounter++;
+        for (; ti >= 0 && buffer->fieldStr[ti - 1] == ' '; ti--) {
+        }
+
+        nonSpaceEndIndex = ti;
+//        printf("Binding bindFieldCounter=%d, fieldLength=%d fieldStart=%s\n", bindFieldCounter, fieldLength, fieldStart);
+//        cout<<field<<endl;
+
+//        cout << field << endl;
+//        cout << "value='" << fieldStart << "'" << endl;
+//        cout << "nonSpaceStartIndex=" << nonSpaceStartIndex
+//                << " nonSpaceEndIndex=" << nonSpaceEndIndex << endl;
+//        cout << "fieldLength=" << fieldLength << endl;
+//
+////        *(fieldStart + nonSpaceEndIndex) = 0;
+//        cout << "value='" << fieldStart + nonSpaceStartIndex << "' after"
+//                << endl;
+
+// First check if missing then bind it to null
+        if (field.missingValue != NULL
+                && strcmp(fieldStart, field.missingValue->c_str()) == 0) {
+#ifndef DISABLE_SQL_CODE
+#    ifndef ENABLE_SQL_CHECKS
+            sqlite3_bind_null(sqlStmt, bindFieldCounter);
+#    else
+            rc = sqlite3_bind_null(sqlStmt, bindFieldCounter);
+            if (rc != SQLITE_OK) {
+                fprintf(stderr, "SQL error %d: text null binding failed\n", rc);
+                return 1;
+            }
+#    endif
+#endif
+//            indexInLine += fieldLength + 1;
+            continue;
+        }
+
+        // If it is as string and no trimming required
+        if (field.type == 'S' && field.isTrim == 0) {
+#ifndef DISABLE_SQL_CODE
+#    ifndef ENABLE_SQL_CHECKS
+            sqlite3_bind_text(sqlStmt, bindFieldCounter, fieldStart,
+                    fieldLength,
+                    SQLITE_TRANSIENT);
+#    else
+//            printf("3Binding bindFieldCounter=%d, fieldLength=%d fieldStart=%s\n", bindFieldCounter, fieldLength, fieldStart);
+            rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, fieldStart,
+                    fieldLength,
+                    SQLITE_TRANSIENT);
+            if (rc != SQLITE_OK) {
+                fprintf(stderr, "SQL error %d: text binding failed\n", rc);
+                return 1;
+            }
+#    endif
+#endif
+//            indexInLine += fieldLength + 1;
+            continue;
+        }
+
+        // Looks like the whole string is filled with spaces so bind with null
+        if (nonSpaceStartIndex == -1) {
+#ifndef DISABLE_SQL_CODE
+#    ifndef ENABLE_SQL_CHECKS
+            sqlite3_bind_null(sqlStmt, bindFieldCounter);
+#    else
+            rc = sqlite3_bind_null(sqlStmt, bindFieldCounter);
+            if (rc != SQLITE_OK) {
+                fprintf(stderr, "SQL error %d: text null binding failed\n", rc);
+                return 1;
+            }
+#    endif
+#endif
+//            indexInLine += fieldLength + 1;
+            continue;
+        }
+
+        if (field.type == 'S' || field.type == 'I' || field.type == 'R') {
+#ifndef DISABLE_SQL_CODE
+#    ifndef ENABLE_SQL_CHECKS
+            sqlite3_bind_text(sqlStmt, bindFieldCounter,
+                    fieldStart + nonSpaceStartIndex,
+                    nonSpaceEndIndex - nonSpaceStartIndex,
+                    SQLITE_TRANSIENT);
+#    else
+//            printf("4Binding bindFieldCounter=%d, fieldLength=%d fieldStart=%s\n", bindFieldCounter, fieldLength, fieldStart);
+            rc = sqlite3_bind_text(sqlStmt, bindFieldCounter,
+                    fieldStart + nonSpaceStartIndex,
+                    nonSpaceEndIndex - nonSpaceStartIndex,
+                    SQLITE_TRANSIENT);
+            if (rc != SQLITE_OK) {
+                fprintf(stderr, "SQL error %d: text binding failed\n", rc);
+                return 1;
+            }
+#    endif
+#endif
+//            indexInLine += fieldLength + 1;
+            continue;
+        }
+
+        if (field.type == 'D') {
+            INIT_TM(tm)
+            if (strptime(fieldStart, field.format.c_str(), &tm) != NULL) {
+                if (field.pivotYear != -1) {
+                    fixYear(field.pivotYear, &tm);
+                }
+                strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%d", &tm);
+#ifndef DISABLE_SQL_CODE
+#    ifndef ENABLE_SQL_CHECKS
+                sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring, 10,
+                        SQLITE_TRANSIENT);
+#    else
+                rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
+                        10,
+                        SQLITE_TRANSIENT);
+
+                if (rc != SQLITE_OK) {
+                    fprintf(stderr, "SQL error %d: text binding failed\n", rc);
+                    return 1;
+                }
+#    endif
+#endif
+            }
+//            indexInLine += fieldLength + 1;
+            continue;
+        }
+
+        if (field.type == 'T') {
+            INIT_TM(tm)
+            if (strptime(fieldStart, field.format.c_str(), &tm) != NULL) {
+                if (field.pivotYear != -1) {
+                    fixYear(field.pivotYear, &tm);
+                }
+                strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%dT%H:%M:%S",
+                        &tm);
+#ifndef DISABLE_SQL_CODE
+#    ifndef ENABLE_SQL_CHECKS
+                sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
+                        MAX_DATE_STRING_LEN,
+                        SQLITE_TRANSIENT);
+#    else
+                rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
+                MAX_DATE_STRING_LEN,
+                SQLITE_TRANSIENT);
+
+                if (rc != SQLITE_OK) {
+                    fprintf(stderr, "SQL error %d: text binding failed\n", rc);
+                    return 1;
+                }
+#    endif
+#endif
+            }
+        }
+
+//        indexInLine += fieldLength + 1;
     }
     return 0;
 //   return pData;
@@ -1422,36 +1663,35 @@ int main(int argc, char **argv) {
     }
 #endif
 
-//    string line;
-
     long recordCounter = 0;
-    int index = 0;
     int fieldCounter = 0;
     char *lineStr = NULL;
 //    Data *pData = new Data[fieldListCount];
     long commitCounter = 0;
     char * line = NULL;
     size_t len = 0;
-    ssize_t read;
+    size_t read;
+    Buffer buffer;
+    buffer.bufferIndex = buffer.bufferSize;
+    buffer.fp = fp;
+    int parseRet = 0;
 //    while (getline(*inStream, line)) {
-    while ((read = getline(&lineStr, &len, fp)) != -1) {
+//    while ((read = getline(&lineStr, &len, fp)) != -1) {
+    while (true) {
 
         /*
          // if(isDebug) cout<<"line="<<line<<endl;
          // string insertQry;
          // insertQry = "INSERT INTO " + tableName + " VALUES (";
          */
-        index = 0;
 //        lineStr = (char *) line.c_str();
         // cout<<lineStr<<endl;
         //parseFixedLenRecord(layout, lineStr, sqlStmt);
 //        parseDelimRecord(*pLayout, NULL, lineStr, line.length(), sqlStmt);
-        if(*(lineStr + read - 1) == '\n') {
-            *(lineStr + read - 1) = 0;
-            read--;
-        }
-
-        parseDelimRecord(*pLayout, NULL, lineStr, read, sqlStmt);
+//        parseDelimRecord(*pLayout, NULL, lineStr, read, sqlStmt);
+        parseRet = parseDelimRecord(*pLayout, NULL, &buffer, read, sqlStmt);
+        if (parseRet == -1)
+            break;
 
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
@@ -1557,7 +1797,7 @@ int main(int argc, char **argv) {
     printf("RecordInserted=%ld\n", recordCounter);
     delete pLayout;
 //    inFile.close();
-    if(fp != NULL) {
+    if (fp != NULL) {
         fclose(fp);
     }
 }
