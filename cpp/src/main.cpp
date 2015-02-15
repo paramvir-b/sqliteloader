@@ -85,12 +85,13 @@ struct Field {
     string format;
     int pivotYear;
     string *missingValue;
+    int missingValueLen;
     int isTrim;
     int endOffSet;
     Field() :
             layoutPtr(NULL), isSkip(0), type('S'), length(0), format(""), pivotYear(
                     -1), missingValue(
-            NULL), isTrim(1), endOffSet(0) {
+            NULL), missingValueLen(0), isTrim(1), endOffSet(0) {
     }
 
     friend ostream& operator<<(ostream &outStream, Field &field) {
@@ -476,25 +477,20 @@ struct Buffer {
     }
 };
 
-int parseDelimRecord(Layout &layout, void *pInfo, Buffer *buffer,
-        int lineStrLen, sqlite3_stmt *sqlStmt) {
+inline int parseDelimRecord(Layout &layout, Buffer *buffer,
+        sqlite3_stmt *sqlStmt) {
 #define MAX_DATE_STRING_LEN 20
     static char datestring[MAX_DATE_STRING_LEN];
-    DelimFileData *pDelimInfo = (DelimFileData *) pInfo;
-//char separator = pDelimInfo->separator;
     char separator = layout.separator;
 #ifndef DISABLE_SQL_CODE
     int rc;
 #endif
     struct tm tm;
-//    printf("bufferIndex=%d\n", buffer->bufferIndex);
-    char ch = 0;
     char *fieldStart = buffer->fieldStr;
-    int fieldLength;
-    int ti;
+    register int fieldLength;
     int nonSpaceStartIndex;
-    int nonSpaceEndIndex;
-    size_t readCount = 0;
+    register int nonSpaceEndIndex;
+    register char ch = 0;
 
 //    int indexInLine = 0;
     int fieldListCount = layout.fieldListLen;
@@ -503,7 +499,6 @@ int parseDelimRecord(Layout &layout, void *pInfo, Buffer *buffer,
         Field &field = layout.fieldList[fieldCounter];
 //        char *fieldStart = lineStr + indexInLine;
         fieldLength = 0;
-        ti = 0;
         nonSpaceStartIndex = -1;
         nonSpaceEndIndex = -1;
         if (ch == '\n') {
@@ -516,22 +511,24 @@ int parseDelimRecord(Layout &layout, void *pInfo, Buffer *buffer,
                     buffer->bufferSize = 0;
                     buffer->buffer[0] = EOF;
                 } else {
-                    readCount = fread(buffer->buffer, 1, buffer->bufferSize,
-                            buffer->fp);
-                    buffer->bufferSize = readCount;
+                    buffer->bufferSize = fread(buffer->buffer, 1,
+                            buffer->bufferSize, buffer->fp);
                 }
             }
-            buffer->fieldStr[ti] = ch = buffer->buffer[buffer->bufferIndex];
+            buffer->fieldStr[fieldLength] = ch =
+                    buffer->buffer[buffer->bufferIndex];
             buffer->bufferIndex++;
-            if (ch != ' ' && nonSpaceStartIndex == -1) {
-                nonSpaceStartIndex = ti;
-            }
             if (ch == separator || ch == '\n' || ch == EOF) {
-                buffer->fieldStr[ti] = 0;
+                buffer->fieldStr[fieldLength] = 0;
                 break;
+            } else if (ch != ' ') {
+                if (nonSpaceStartIndex == -1) {
+                    nonSpaceStartIndex = fieldLength;
+                }
+                nonSpaceEndIndex = fieldLength + 1;
             }
+
             fieldLength++;
-            ti++;
 
         } while (true);
 
@@ -543,10 +540,10 @@ int parseDelimRecord(Layout &layout, void *pInfo, Buffer *buffer,
             continue;
         }
         bindFieldCounter++;
-        for (; ti >= 0 && buffer->fieldStr[ti - 1] == ' '; ti--) {
-        }
-
-        nonSpaceEndIndex = ti;
+//        for (; ti >= 0 && buffer->fieldStr[ti - 1] == ' '; ti--) {
+//        }
+//
+//        nonSpaceEndIndex = ti;
 //        printf("Binding bindFieldCounter=%d, fieldLength=%d fieldStart=%s\n", bindFieldCounter, fieldLength, fieldStart);
 //        cout<<field<<endl;
 
@@ -625,7 +622,12 @@ int parseDelimRecord(Layout &layout, void *pInfo, Buffer *buffer,
                     nonSpaceEndIndex - nonSpaceStartIndex,
                     SQLITE_TRANSIENT);
 #    else
-//            printf("4Binding bindFieldCounter=%d, fieldLength=%d fieldStart=%s\n", bindFieldCounter, fieldLength, fieldStart);
+//            printf(
+//                    "4Binding nonSpaceStartIndex=%d, nonSpaceEndIndex=%d chat(%d)='%c' fieldStart=%s\n",
+//                    nonSpaceStartIndex, nonSpaceEndIndex,
+//                    (nonSpaceEndIndex - nonSpaceStartIndex),
+//                    fieldStart[nonSpaceEndIndex - nonSpaceStartIndex],
+//                    fieldStart);
             rc = sqlite3_bind_text(sqlStmt, bindFieldCounter,
                     fieldStart + nonSpaceStartIndex,
                     nonSpaceEndIndex - nonSpaceStartIndex,
@@ -1668,7 +1670,7 @@ int main(int argc, char **argv) {
     long commitCounter = 0;
     char * line = NULL;
     size_t len = 0;
-    size_t read;
+//    size_t read;
     Buffer buffer;
     buffer.bufferIndex = buffer.bufferSize;
     buffer.fp = fp;
@@ -1687,7 +1689,7 @@ int main(int argc, char **argv) {
         //parseFixedLenRecord(layout, lineStr, sqlStmt);
 //        parseDelimRecord(*pLayout, NULL, lineStr, line.length(), sqlStmt);
 //        parseDelimRecord(*pLayout, NULL, lineStr, read, sqlStmt);
-        parseRet = parseDelimRecord(*pLayout, NULL, &buffer, read, sqlStmt);
+        parseRet = parseDelimRecord(*pLayout, &buffer, sqlStmt);
         if (parseRet == -1)
             break;
 
