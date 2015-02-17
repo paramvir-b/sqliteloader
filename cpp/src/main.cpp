@@ -511,12 +511,10 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
     register int nonSpaceEndIndex;
     register char ch = 0;
 
-//    int indexInLine = 0;
     int fieldListCount = layout.fieldListLen;
     for (int fieldCounter = 0, bindFieldCounter = 0;
             fieldCounter < fieldListCount; fieldCounter++) {
         Field &field = layout.fieldList[fieldCounter];
-//        char *fieldStart = lineStr + indexInLine;
         fieldLength = 0;
         nonSpaceStartIndex = -1;
         nonSpaceEndIndex = -1;
@@ -555,26 +553,9 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
             return -1;
         }
         if (field.isSkip == 1) {
-            //            indexInLine += fieldLength + 1;
             continue;
         }
         bindFieldCounter++;
-//        for (; ti >= 0 && buffer->fieldStr[ti - 1] == ' '; ti--) {
-//        }
-//
-//        nonSpaceEndIndex = ti;
-//        printf("Binding bindFieldCounter=%d, fieldLength=%d fieldStart=%s\n", bindFieldCounter, fieldLength, fieldStart);
-//        cout<<field<<endl;
-
-//        cout << field << endl;
-//        cout << "value='" << fieldStart << "'" << endl;
-//        cout << "nonSpaceStartIndex=" << nonSpaceStartIndex
-//                << " nonSpaceEndIndex=" << nonSpaceEndIndex << endl;
-//        cout << "fieldLength=" << fieldLength << endl;
-//
-////        *(fieldStart + nonSpaceEndIndex) = 0;
-//        cout << "value='" << fieldStart + nonSpaceStartIndex << "' after"
-//                << endl;
 
 // First check if missing then bind it to null
         if (field.missingValue != NULL && fieldLength == field.missingValueLen
@@ -591,7 +572,6 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
             }
 #    endif
 #endif
-//            indexInLine += fieldLength + 1;
             continue;
         }
 
@@ -603,7 +583,6 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
                     fieldLength,
                     SQLITE_TRANSIENT);
 #    else
-//            printf("3Binding bindFieldCounter=%d, fieldLength=%d fieldStart=%s\n", bindFieldCounter, fieldLength, fieldStart);
             rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, fieldStart,
                     fieldLength,
                     SQLITE_TRANSIENT);
@@ -613,7 +592,6 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
             }
 #    endif
 #endif
-//            indexInLine += fieldLength + 1;
             continue;
         }
 
@@ -630,7 +608,6 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
             }
 #    endif
 #endif
-//            indexInLine += fieldLength + 1;
             continue;
         }
 
@@ -642,12 +619,6 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
                     nonSpaceEndIndex - nonSpaceStartIndex,
                     SQLITE_TRANSIENT);
 #    else
-//            printf(
-//                    "4Binding nonSpaceStartIndex=%d, nonSpaceEndIndex=%d chat(%d)='%c' fieldStart=%s\n",
-//                    nonSpaceStartIndex, nonSpaceEndIndex,
-//                    (nonSpaceEndIndex - nonSpaceStartIndex),
-//                    fieldStart[nonSpaceEndIndex - nonSpaceStartIndex],
-//                    fieldStart);
             rc = sqlite3_bind_text(sqlStmt, bindFieldCounter,
                     fieldStart + nonSpaceStartIndex,
                     nonSpaceEndIndex - nonSpaceStartIndex,
@@ -658,7 +629,6 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
             }
 #    endif
 #endif
-//            indexInLine += fieldLength + 1;
             continue;
         }
 
@@ -685,7 +655,6 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
 #    endif
 #endif
             }
-//            indexInLine += fieldLength + 1;
             continue;
         }
 
@@ -716,11 +685,10 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
             }
         }
 
-//        indexInLine += fieldLength + 1;
     }
     return 0;
-//   return pData;
 }
+
 int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
     /*
      int fieldListCount = pLay->fieldListLen;
