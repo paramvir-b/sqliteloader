@@ -465,13 +465,14 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
 struct Buffer {
 #define BUFFER_MAX_SIZE 102400
     FILE *fp;
+    int eofFlag;
     int bufferSize;
     char buffer[BUFFER_MAX_SIZE];
     int bufferIndex;
     static const int fieldSize = BUFFER_MAX_SIZE;
     char fieldStr[fieldSize];
     Buffer() :
-            bufferSize(BUFFER_MAX_SIZE), fp(NULL), bufferIndex(
+            bufferSize(BUFFER_MAX_SIZE), fp(NULL), eofFlag(0), bufferIndex(
             BUFFER_MAX_SIZE) {
 
     }
@@ -509,7 +510,7 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
                 buffer->bufferIndex = 0;
                 if (feof(buffer->fp)) {
                     buffer->bufferSize = 0;
-                    buffer->buffer[0] = EOF;
+                    buffer->eofFlag = 1;
                 } else {
                     buffer->bufferSize = fread(buffer->buffer, 1,
                             buffer->bufferSize, buffer->fp);
@@ -518,7 +519,7 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
             buffer->fieldStr[fieldLength] = ch =
                     buffer->buffer[buffer->bufferIndex];
             buffer->bufferIndex++;
-            if (ch == separator || ch == '\n' || ch == EOF) {
+            if (ch == separator || ch == '\n' || buffer->eofFlag == 1) {
                 buffer->fieldStr[fieldLength] = 0;
                 break;
             } else if (ch != ' ') {
@@ -532,7 +533,7 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
 
         } while (true);
 
-        if (ch == EOF && fieldLength == 0) {
+        if (buffer->eofFlag == 1 && fieldLength == 0) {
             return -1;
         }
         if (field.isSkip == 1) {
