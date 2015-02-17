@@ -559,8 +559,9 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
 //                << endl;
 
 // First check if missing then bind it to null
-        if (field.missingValue != NULL
-                && strcmp(fieldStart, field.missingValue->c_str()) == 0) {
+        if (field.missingValue != NULL && fieldLength == field.missingValueLen
+                && strncmp(fieldStart, field.missingValue->c_str(),
+                        field.missingValueLen) == 0) {
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
             sqlite3_bind_null(sqlStmt, bindFieldCounter);
@@ -1057,6 +1058,8 @@ Layout * parseLayout(string layoutFileName, string argTableName,
         if (jsonMissingValue != NULL) {
             pLayout->fieldList[i].missingValue = new string(
                     jsonMissingValue->valuestring);
+            pLayout->fieldList[i].missingValueLen = strlen(
+                    pLayout->fieldList[i].missingValue->c_str());
         }
 
         if (pLayout->type == 'F') {
