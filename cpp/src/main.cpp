@@ -91,19 +91,16 @@ struct Field {
     int isTrim;
     int endOffSet;
     Field() :
-            layoutPtr(NULL), isSkip(0), type('S'), length(0), format(""), pivotYear(
-                    -1), missingValue(
+            layoutPtr(NULL), isSkip(0), type('S'), length(0), format(""), pivotYear(-1), missingValue(
             NULL), missingValueLen(0), isTrim(1), endOffSet(0) {
     }
 
     friend ostream& operator<<(ostream &outStream, Field &field) {
-        cout << "[ isSkip=" << field.isSkip << " name=" << field.name
-                << ", type=" << field.type << ", length=" << field.length
-                << ", format=" << field.format << ", pivotYear="
+        cout << "[ isSkip=" << field.isSkip << " name=" << field.name << ", type=" << field.type
+                << ", length=" << field.length << ", format=" << field.format << ", pivotYear="
                 << field.pivotYear << ", missingValue="
-                << (field.missingValue == NULL ?
-                        "NULL" : field.missingValue->c_str()) << ", isTrim="
-                << field.isTrim << ", endOffSet = " << field.endOffSet << " ]";
+                << (field.missingValue == NULL ? "NULL" : field.missingValue->c_str())
+                << ", isTrim=" << field.isTrim << ", endOffSet = " << field.endOffSet << " ]";
         return outStream;
     }
 
@@ -140,8 +137,7 @@ struct IndexColumn {
     }
 
     friend ostream& operator<<(ostream &outStream, IndexColumn &indexColumn) {
-        outStream << "[ " << "name=" << indexColumn.name << ", query="
-                << indexColumn.query << " ]";
+        outStream << "[ " << "name=" << indexColumn.name << ", query=" << indexColumn.query << " ]";
         return outStream;
     }
 };
@@ -169,10 +165,8 @@ struct Index {
     }
 
     friend ostream& operator<<(ostream &outStream, Index &index) {
-        outStream << "[ " << "name=" << index.name << ", whereClause="
-                << index.whereClause;
-        outStream << ", indexColumnList(" << index.indexColumnList.size()
-                << ")=[ ";
+        outStream << "[ " << "name=" << index.name << ", whereClause=" << index.whereClause;
+        outStream << ", indexColumnList(" << index.indexColumnList.size() << ")=[ ";
         for (int i = 0; i < index.indexColumnList.size(); i++) {
             outStream << index.indexColumnList[i] << ", ";
         }
@@ -265,8 +259,7 @@ inline void fixYear(Field *pField, struct tm *ptm) {
     int year = ptm->tm_year + 1900;
     int twoDigitYear = ((year / 10) % 10) * 10 + year % 10;
 
-    twoDigitYear += pField->pivotYearLow
-            + ((twoDigitYear < pField->pivotYearT) ? 100 : 0)
+    twoDigitYear += pField->pivotYearLow + ((twoDigitYear < pField->pivotYearT) ? 100 : 0)
             - pField->pivotYearT;
     ptm->tm_year = twoDigitYear - 1900;
 }
@@ -300,8 +293,8 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
 
     int indexInLine = 0;
     int fieldListCount = layout.fieldListLen;
-    for (int fieldCounter = 0, bindFieldCounter = 0;
-            fieldCounter < fieldListCount; fieldCounter++) {
+    for (int fieldCounter = 0, bindFieldCounter = 0; fieldCounter < fieldListCount;
+            fieldCounter++) {
         Field &field = layout.fieldList[fieldCounter];
         char *fieldStart = lineStr + indexInLine;
         int fieldLength = 0;
@@ -343,8 +336,7 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
 //                << endl;
 
 // First check if missing then bind it to null
-        if (field.missingValue != NULL
-                && strcmp(fieldStart, field.missingValue->c_str()) == 0) {
+        if (field.missingValue != NULL && strcmp(fieldStart, field.missingValue->c_str()) == 0) {
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
             sqlite3_bind_null(sqlStmt, bindFieldCounter);
@@ -368,9 +360,8 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                     fieldLength,
                     SQLITE_TRANSIENT);
 #    else
-            rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, fieldStart,
-                    fieldLength,
-                    SQLITE_TRANSIENT);
+            rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, fieldStart, fieldLength,
+            SQLITE_TRANSIENT);
             if (rc != SQLITE_OK) {
                 fprintf(stderr, "SQL error %d: text binding failed\n", rc);
                 return 1;
@@ -406,8 +397,7 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                     nonSpaceEndIndex - nonSpaceStartIndex,
                     SQLITE_TRANSIENT);
 #    else
-            rc = sqlite3_bind_text(sqlStmt, bindFieldCounter,
-                    fieldStart + nonSpaceStartIndex,
+            rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, fieldStart + nonSpaceStartIndex,
                     nonSpaceEndIndex - nonSpaceStartIndex,
                     SQLITE_TRANSIENT);
             if (rc != SQLITE_OK) {
@@ -432,9 +422,8 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                 sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring, 10,
                         SQLITE_TRANSIENT);
 #    else
-                rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
-                        10,
-                        SQLITE_TRANSIENT);
+                rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring, 10,
+                SQLITE_TRANSIENT);
 
                 if (rc != SQLITE_OK) {
                     fprintf(stderr, "SQL error %d: text binding failed\n", rc);
@@ -453,8 +442,7 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
                 if (field.pivotYear != -1) {
                     fixYear(&field, &tm);
                 }
-                strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%dT%H:%M:%S",
-                        &tm);
+                strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%dT%H:%M:%S", &tm);
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
                 sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
@@ -496,8 +484,7 @@ struct Buffer {
     }
 };
 
-inline int parseDelimRecord(Layout &layout, Buffer *buffer,
-        sqlite3_stmt *sqlStmt) {
+inline int parseDelimRecord(Layout &layout, Buffer *buffer, sqlite3_stmt *sqlStmt) {
 #define MAX_DATE_STRING_LEN 20
     static char datestring[MAX_DATE_STRING_LEN];
     char separator = layout.separator;
@@ -512,8 +499,8 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
     register char ch = 0;
 
     int fieldListCount = layout.fieldListLen;
-    for (int fieldCounter = 0, bindFieldCounter = 0;
-            fieldCounter < fieldListCount; fieldCounter++) {
+    for (int fieldCounter = 0, bindFieldCounter = 0; fieldCounter < fieldListCount;
+            fieldCounter++) {
         Field &field = layout.fieldList[fieldCounter];
         fieldLength = 0;
         nonSpaceStartIndex = -1;
@@ -528,12 +515,10 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
                     buffer->bufferSize = 0;
                     buffer->eofFlag = 1;
                 } else {
-                    buffer->bufferSize = fread(buffer->buffer, 1,
-                            buffer->bufferSize, buffer->fp);
+                    buffer->bufferSize = fread(buffer->buffer, 1, buffer->bufferSize, buffer->fp);
                 }
             }
-            buffer->fieldStr[fieldLength] = ch =
-                    buffer->buffer[buffer->bufferIndex];
+            buffer->fieldStr[fieldLength] = ch = buffer->buffer[buffer->bufferIndex];
             buffer->bufferIndex++;
             if (ch == separator || ch == '\n' || buffer->eofFlag == 1) {
                 buffer->fieldStr[fieldLength] = 0;
@@ -559,8 +544,7 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
 
 // First check if missing then bind it to null
         if (field.missingValue != NULL && fieldLength == field.missingValueLen
-                && strncmp(fieldStart, field.missingValue->c_str(),
-                        field.missingValueLen) == 0) {
+                && strncmp(fieldStart, field.missingValue->c_str(), field.missingValueLen) == 0) {
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
             sqlite3_bind_null(sqlStmt, bindFieldCounter);
@@ -583,9 +567,8 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
                     fieldLength,
                     SQLITE_TRANSIENT);
 #    else
-            rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, fieldStart,
-                    fieldLength,
-                    SQLITE_TRANSIENT);
+            rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, fieldStart, fieldLength,
+            SQLITE_TRANSIENT);
             if (rc != SQLITE_OK) {
                 fprintf(stderr, "SQL error %d: text binding failed\n", rc);
                 return 1;
@@ -619,8 +602,7 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
                     nonSpaceEndIndex - nonSpaceStartIndex,
                     SQLITE_TRANSIENT);
 #    else
-            rc = sqlite3_bind_text(sqlStmt, bindFieldCounter,
-                    fieldStart + nonSpaceStartIndex,
+            rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, fieldStart + nonSpaceStartIndex,
                     nonSpaceEndIndex - nonSpaceStartIndex,
                     SQLITE_TRANSIENT);
             if (rc != SQLITE_OK) {
@@ -644,9 +626,8 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
                 sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring, 10,
                         SQLITE_TRANSIENT);
 #    else
-                rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
-                        10,
-                        SQLITE_TRANSIENT);
+                rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring, 10,
+                SQLITE_TRANSIENT);
 
                 if (rc != SQLITE_OK) {
                     fprintf(stderr, "SQL error %d: text binding failed\n", rc);
@@ -664,8 +645,7 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
                 if (field.pivotYear != -1) {
                     fixYear(&field, &tm);
                 }
-                strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%dT%H:%M:%S",
-                        &tm);
+                strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%dT%H:%M:%S", &tm);
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
                 sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
@@ -742,8 +722,7 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
                 if (start == -1 && ch != ' ' && ch != '\n' && ch != '\r') {
                     start = t;
                     // cout<<"setting start="<<start<<endl;
-                } else if (start > -1 && end == -1
-                        && (ch == ' ' || ch == '\n' || ch == '\r')) {
+                } else if (start > -1 && end == -1 && (ch == ' ' || ch == '\n' || ch == '\r')) {
                     end = t;
                     // cout<<"setting end="<<end<<endl;
                 }
@@ -758,8 +737,7 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
 #    else
                 rc = sqlite3_bind_null(sqlStmt, fieldCounter + 1);
                 if (rc != SQLITE_OK) {
-                    fprintf(stderr, "SQL error %d: text null binding failed\n",
-                            rc);
+                    fprintf(stderr, "SQL error %d: text null binding failed\n", rc);
                     return 1;
                 }
 #    endif
@@ -774,8 +752,8 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
                 sqlite3_bind_text(sqlStmt, fieldCounter + 1, lineStr + start,
                         len, SQLITE_TRANSIENT);
 #    else
-                rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1,
-                        lineStr + start, len, SQLITE_TRANSIENT);
+                rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1, lineStr + start, len,
+                        SQLITE_TRANSIENT);
                 if (rc != SQLITE_OK) {
                     fprintf(stderr, "SQL error %d: text binding failed\n", rc);
                     return 1;
@@ -789,12 +767,10 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
             for (int t = index; t < field.endOffSet; t++) {
                 ch = *(lineStr + t);
                 // cout<<"char="<<*(lineStr + t)<<endl;
-                if (start == -1 && ch != ' ' && ch != '\n' && ch != '\r'
-                        && ch > '0' && ch <= '9') {
+                if (start == -1 && ch != ' ' && ch != '\n' && ch != '\r' && ch > '0' && ch <= '9') {
                     start = t;
                     // cout<<"setting start="<<start<<endl;
-                } else if (start > -1 && end == -1
-                        && (ch == ' ' || ch == '\n' || ch == '\r')) {
+                } else if (start > -1 && end == -1 && (ch == ' ' || ch == '\n' || ch == '\r')) {
                     end = t;
                     // cout<<"setting end="<<end<<endl;
                 }
@@ -809,8 +785,7 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
 #    else
                 rc = sqlite3_bind_null(sqlStmt, fieldCounter + 1);
                 if (rc != SQLITE_OK) {
-                    fprintf(stderr, "SQL error %d: text null binding failed\n",
-                            rc);
+                    fprintf(stderr, "SQL error %d: text null binding failed\n", rc);
                     return 1;
                 }
 #    endif
@@ -828,8 +803,8 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
                 sqlite3_bind_text(sqlStmt, fieldCounter + 1, lineStr + start,
                         len, SQLITE_TRANSIENT);
 #    else
-                rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1,
-                        lineStr + start, len, SQLITE_TRANSIENT);
+                rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1, lineStr + start, len,
+                        SQLITE_TRANSIENT);
                 if (rc != SQLITE_OK) {
                     fprintf(stderr, "SQL error %d: text binding failed\n", rc);
                     return 1;
@@ -844,8 +819,7 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
 //   return pData;
 }
 
-Layout * parseLayout(string layoutFileName, string argTableName,
-        bool isRetainCase) {
+Layout * parseLayout(string layoutFileName, string argTableName, bool isRetainCase) {
 // parsing json
     string json_str = get_file_contents(layoutFileName);
 
@@ -878,8 +852,7 @@ Layout * parseLayout(string layoutFileName, string argTableName,
     int recordLen = 0;
     int fieldCounter = 0;
     int fieldListCount = cJSON_GetArraySize(fieldList);
-    int indexListCount =
-            jIndexList != NULL ? cJSON_GetArraySize(jIndexList) : 0;
+    int indexListCount = jIndexList != NULL ? cJSON_GetArraySize(jIndexList) : 0;
 
 // TODO If we need to give default name. In future may be
 // string tableName = "t";
@@ -899,8 +872,7 @@ Layout * parseLayout(string layoutFileName, string argTableName,
     }
 
     if (tableName.length() <= 0) {
-        throw string(
-                "Table name not specified either in layout or as argument");
+        throw string("Table name not specified either in layout or as argument");
     }
 
     Layout *pLayout = new Layout(fieldListCount);
@@ -926,8 +898,7 @@ Layout * parseLayout(string layoutFileName, string argTableName,
                         cJSON_GetObjectItem(jIndex, "name")->valuestring : "";
         string isUniqueStr =
                 cJSON_GetObjectItem(jIndex, "isUnique") != NULL ?
-                        cJSON_GetObjectItem(jIndex, "isUnique")->valuestring :
-                        "";
+                        cJSON_GetObjectItem(jIndex, "isUnique")->valuestring : "";
         bool isUnique = false;
         isUnique = strcmp(isUniqueStr.c_str(), "true") == 0;
         string whereClause =
@@ -943,12 +914,10 @@ Layout * parseLayout(string layoutFileName, string argTableName,
             cJSON *jIndexColumn = cJSON_GetArrayItem(jColumnList, colI);
             string columnName =
                     cJSON_GetObjectItem(jIndexColumn, "name") != NULL ?
-                            cJSON_GetObjectItem(jIndexColumn, "name")->valuestring :
-                            "";
+                            cJSON_GetObjectItem(jIndexColumn, "name")->valuestring : "";
             string query =
                     cJSON_GetObjectItem(jIndexColumn, "query") != NULL ?
-                            cJSON_GetObjectItem(jIndexColumn, "query")->valuestring :
-                            "";
+                            cJSON_GetObjectItem(jIndexColumn, "query")->valuestring : "";
             if (columnName.length() < 1) {
                 char str[20];
                 sprintf(str, "%d", (colI + 1));
@@ -997,8 +966,7 @@ Layout * parseLayout(string layoutFileName, string argTableName,
         if (isRetainCase) {
             pLayout->fieldList[i].name = jsonFieldName->valuestring;
         } else {
-            pLayout->fieldList[i].name = to_lower_copy(
-                    jsonFieldName->valuestring);
+            pLayout->fieldList[i].name = to_lower_copy(jsonFieldName->valuestring);
         }
 
         cJSON *jsonIsSkip = cJSON_GetObjectItem(jsonField, "isSkip");
@@ -1039,11 +1007,9 @@ Layout * parseLayout(string layoutFileName, string argTableName,
             }
         }
 
-        cJSON *jsonMissingValue = cJSON_GetObjectItem(jsonField,
-                "missingValue");
+        cJSON *jsonMissingValue = cJSON_GetObjectItem(jsonField, "missingValue");
         if (jsonMissingValue != NULL) {
-            pLayout->fieldList[i].missingValue = new string(
-                    jsonMissingValue->valuestring);
+            pLayout->fieldList[i].missingValue = new string(jsonMissingValue->valuestring);
             pLayout->fieldList[i].missingValueLen = strlen(
                     pLayout->fieldList[i].missingValue->c_str());
         }
@@ -1057,12 +1023,10 @@ Layout * parseLayout(string layoutFileName, string argTableName,
                 throw e;
             }
 
-            pLayout->fieldList[i].length = cJSON_GetObjectItem(jsonField,
-                    "length")->valueint;
+            pLayout->fieldList[i].length = cJSON_GetObjectItem(jsonField, "length")->valueint;
             if (i > 0)
-                pLayout->fieldList[i].endOffSet =
-                        pLayout->fieldList[i - 1].endOffSet
-                                + pLayout->fieldList[i].length;
+                pLayout->fieldList[i].endOffSet = pLayout->fieldList[i - 1].endOffSet
+                        + pLayout->fieldList[i].length;
             else
                 pLayout->fieldList[i].endOffSet = pLayout->fieldList[i].length;
             recordLen += pLayout->fieldList[i].length;
@@ -1092,8 +1056,7 @@ Layout * parseLayout(string layoutFileName, string argTableName,
             pLayout->fieldList[i].type = 'T';
         }
 
-        if (pLayout->fieldList[i].type == 'D'
-                || pLayout->fieldList[i].type == 'T') {
+        if (pLayout->fieldList[i].type == 'D' || pLayout->fieldList[i].type == 'T') {
             cJSON *jsonDateFormat = cJSON_GetObjectItem(jsonField, "format");
             if (jsonDateFormat == NULL) {
                 string e = string("Name: ");
@@ -1147,8 +1110,7 @@ string getCreateTableQuery(Layout & layout) {
             }
         }
         if (i > 0)
-            field.endOffSet = layout.fieldList[i - 1].endOffSet
-                    + layout.fieldList[i].length;
+            field.endOffSet = layout.fieldList[i - 1].endOffSet + layout.fieldList[i].length;
         else
             field.endOffSet = field.length;
         recordLen += field.length;
@@ -1179,8 +1141,7 @@ string getInsertQuery(Layout & layout) {
     columnQry += ")";
     valueQry += ")";
     string insertBindQry;
-    insertBindQry = "INSERT INTO '" + layout.name + "'" + columnQry + valueQry
-            + ";";
+    insertBindQry = "INSERT INTO '" + layout.name + "'" + columnQry + valueQry + ";";
     return insertBindQry;
 }
 
@@ -1191,9 +1152,8 @@ int checkIfTableExist(sqlite3 *db, string tableNameToCheck) {
     int rc;
     sqlite3_stmt *sqlStmt;
     tableNameToCheck = to_lower_copy(tableNameToCheck);
-    string queryStr =
-            "SELECT count(name) FROM sqlite_master WHERE type='table' AND lower(name)='"
-                    + tableNameToCheck + "'";
+    string queryStr = "SELECT count(name) FROM sqlite_master WHERE type='table' AND lower(name)='"
+            + tableNameToCheck + "'";
     rc = sqlite3_prepare_v2(db, queryStr.c_str(), queryStr.length(), &sqlStmt,
     NULL);
     if (rc != SQLITE_OK) {
@@ -1269,9 +1229,8 @@ int createIndex(sqlite3 *db, const Layout& layout, string indexOnFieldName) {
     int rc;
     char *zErrMsg = 0;
 
-    string indexQry = "CREATE INDEX '" + layout.name + "_" + indexOnFieldName
-            + "_index' ON '" + layout.name + "' ('" + layout.fieldList[0].name
-            + "');";
+    string indexQry = "CREATE INDEX '" + layout.name + "_" + indexOnFieldName + "_index' ON '"
+            + layout.name + "' ('" + layout.fieldList[0].name + "');";
 
     rc = sqlite3_exec(db, indexQry.c_str(), NULL, NULL, &zErrMsg);
     if (rc != SQLITE_OK) {
@@ -1283,8 +1242,7 @@ int createIndex(sqlite3 *db, const Layout& layout, string indexOnFieldName) {
     return 0;
 }
 
-int createIndex(sqlite3 *db, const string tableName, const Index& index,
-        const bool isDebug) {
+int createIndex(sqlite3 *db, const string tableName, const Index& index, const bool isDebug) {
 #ifndef DISABLE_SQL_CODE
     int rc;
     char *zErrMsg = 0;
@@ -1434,8 +1392,7 @@ OptionParser createParser() {
     OptionParser parser = OptionParser().description(
             "Converts fixed length files to sqlite database");
 
-    parser.add_option("-t").dest("t").metavar("<table_name>").help(
-            "Table to be created");
+    parser.add_option("-t").dest("t").metavar("<table_name>").help("Table to be created");
     parser.add_option("-i").dest("i").metavar("<input_file>").help(
             "Input fixed length text file containing records to be ported to sqlite data base.");
     parser.add_option("-o").dest("o").metavar("<output_file>").help(
@@ -1449,10 +1406,8 @@ OptionParser createParser() {
             "Delete if table already exists");
     parser.add_option("-a").dest("a").set_default("0").action("store_true").help(
             "Append to existing table if it does exist");
-    parser.add_option("-v").dest("v").set_default("0").action("store_true").help(
-            "Debug mode");
-    parser.add_option("-s").dest("s").set_default("0").action("store_true").help(
-            "Show stats");
+    parser.add_option("-v").dest("v").set_default("0").action("store_true").help("Debug mode");
+    parser.add_option("-s").dest("s").set_default("0").action("store_true").help("Show stats");
     parser.add_option("-p").dest("p").metavar("<comma-separated-pragma-list>").help(
             "Comma separated pragma which ran before creation of DB.");
 
@@ -1559,8 +1514,7 @@ int main(int argc, char **argv) {
     rc = sqlite3_open(dbFileName.c_str(), &db);
     if (rc) {
         fprintf(stderr, "Can't open database file: %s\n", dbFileName.c_str());
-        fprintf(stderr, "Can't open database sqlite error: %s\n",
-                sqlite3_errmsg(db));
+        fprintf(stderr, "Can't open database sqlite error: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
         return (1);
     }
@@ -1621,8 +1575,7 @@ int main(int argc, char **argv) {
             cout << "Applying pragmaList=" << pragmaList << endl;
         rc = sqlite3_exec(db, pragmaList.c_str(), NULL, 0, &zErrMsg);
         if (rc != SQLITE_OK) {
-            fprintf(stderr, "Error running pragmaList. SQL error: %s\n",
-                    zErrMsg);
+            fprintf(stderr, "Error running pragmaList. SQL error: %s\n", zErrMsg);
             sqlite3_free(zErrMsg);
             return 1;
         }
@@ -1643,8 +1596,7 @@ int main(int argc, char **argv) {
     if (isDebug) {
         cout << "insertBindQry=" << insertBindQry << endl;
     }
-    rc = sqlite3_prepare_v2(db, insertBindQry.c_str(), insertBindQry.length(),
-            &sqlStmt, NULL);
+    rc = sqlite3_prepare_v2(db, insertBindQry.c_str(), insertBindQry.length(), &sqlStmt, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Prepare query=%s\n", insertBindQry.c_str());
         fprintf(stderr, "SQL error %d: preparing failed\n", rc);
@@ -1732,9 +1684,8 @@ int main(int argc, char **argv) {
     }
     long insertTimeInSecs = time(NULL) - cInsertStartTime;
     if (isShowStats) {
-        printf("Inserted %ld records in %ld seconds with %.2f opts/sec \n",
-                recordCounter, insertTimeInSecs,
-                ((double) recordCounter / insertTimeInSecs));
+        printf("Inserted %ld records in %ld seconds with %.2f opts/sec \n", recordCounter,
+                insertTimeInSecs, ((double) recordCounter / insertTimeInSecs));
     }
 
     rc = sqlite3_finalize(sqlStmt);
@@ -1751,9 +1702,8 @@ int main(int argc, char **argv) {
         createIndex(db, pLayout->name, pLayout->indexList[i], isDebug);
         long indexTimeInSecs = time(NULL) - cIndexStartTime;
         if (isShowStats) {
-            printf("Indexed %ld records in %ld seconds with %.2f opts/sec \n",
-                    recordCounter, indexTimeInSecs,
-                    ((double) recordCounter / indexTimeInSecs));
+            printf("Indexed %ld records in %ld seconds with %.2f opts/sec \n", recordCounter,
+                    indexTimeInSecs, ((double) recordCounter / indexTimeInSecs));
         }
     }
 
@@ -1777,9 +1727,8 @@ int main(int argc, char **argv) {
     long timeInSecs = time(NULL) - cStartTime;
 // printf("Imported %ld records in %4.2f seconds with %.2f opts/sec \n", recordCounter, timeInSecs, recordCounter/timeInSecs);
     if (isShowStats) {
-        printf("Imported %ld records in %ld seconds with %.2f opts/sec \n",
-                recordCounter, timeInSecs,
-                ((double) recordCounter / timeInSecs));
+        printf("Imported %ld records in %ld seconds with %.2f opts/sec \n", recordCounter,
+                timeInSecs, ((double) recordCounter / timeInSecs));
         printf("DB file is at: %s\n", dbFileName.c_str());
     }
     printf("TableCreated=%s\n", pLayout->name.c_str());
