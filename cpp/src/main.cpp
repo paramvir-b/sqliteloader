@@ -84,6 +84,8 @@ struct Field {
     int length;
     string format;
     int pivotYear;
+    int pivotYearLow;
+    int pivotYearT;
     string *missingValue;
     int missingValueLen;
     int isTrim;
@@ -103,6 +105,18 @@ struct Field {
                         "NULL" : field.missingValue->c_str()) << ", isTrim="
                 << field.isTrim << ", endOffSet = " << field.endOffSet << " ]";
         return outStream;
+    }
+
+    void setPivotYear(int pivotYear) {
+        this->pivotYear = pivotYear;
+        this->pivotYearLow = this->pivotYear - 50;
+
+        if (this->pivotYearLow >= 0) {
+            this->pivotYearT = this->pivotYearLow % 100;
+        } else {
+            this->pivotYearT = 99 + ((this->pivotYearLow + 1) % 100);
+        }
+
     }
 };
 
@@ -229,14 +243,9 @@ void printStr(char *str, int start, int len) {
     cout << "'" << endl;
 }
 
-int getLastTwoDigits(int num) {
-    int d1 = num % 10;
-    int d2 = (num / 10) % 10;
-    return d2 * 10 + d1;
-}
-
 void fixYear(int pivotYear, struct tm *ptm) {
-    int year = getLastTwoDigits(ptm->tm_year + 1900);
+    int year = ptm->tm_year + 1900;
+    int twoDigityear = ((year / 10) % 10) * 10 + year % 10;
 
     // TODO WE CAN COMPUTE THIS ONCE FOR PIVOT YEAR
     int low = pivotYear - 50;
@@ -248,9 +257,18 @@ void fixYear(int pivotYear, struct tm *ptm) {
         t = 99 + ((low + 1) % 100);
     }
 
-    year += low + ((year < t) ? 100 : 0) - t;
-    ptm->tm_year = year - 1900;
+    twoDigityear += low + ((twoDigityear < t) ? 100 : 0) - t;
+    ptm->tm_year = twoDigityear - 1900;
+}
 
+inline void fixYear(Field *pField, struct tm *ptm) {
+    int year = ptm->tm_year + 1900;
+    int twoDigitYear = ((year / 10) % 10) * 10 + year % 10;
+
+    twoDigitYear += pField->pivotYearLow
+            + ((twoDigitYear < pField->pivotYearT) ? 100 : 0)
+            - pField->pivotYearT;
+    ptm->tm_year = twoDigitYear - 1900;
 }
 
 // For init refer to http://www.cplusplus.com/reference/ctime/tm/ or
@@ -406,7 +424,7 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
             INIT_TM(tm)
             if (strptime(fieldStart, field.format.c_str(), &tm) != NULL) {
                 if (field.pivotYear != -1) {
-                    fixYear(field.pivotYear, &tm);
+                    fixYear(&field, &tm);
                 }
                 strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%d", &tm);
 #ifndef DISABLE_SQL_CODE
@@ -433,7 +451,7 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
             INIT_TM(tm)
             if (strptime(fieldStart, field.format.c_str(), &tm) != NULL) {
                 if (field.pivotYear != -1) {
-                    fixYear(field.pivotYear, &tm);
+                    fixYear(&field, &tm);
                 }
                 strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%dT%H:%M:%S",
                         &tm);
@@ -648,7 +666,7 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
             INIT_TM(tm)
             if (strptime(fieldStart, field.format.c_str(), &tm) != NULL) {
                 if (field.pivotYear != -1) {
-                    fixYear(field.pivotYear, &tm);
+                    fixYear(&field, &tm);
                 }
                 strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%d", &tm);
 #ifndef DISABLE_SQL_CODE
@@ -675,7 +693,7 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer,
             INIT_TM(tm)
             if (strptime(fieldStart, field.format.c_str(), &tm) != NULL) {
                 if (field.pivotYear != -1) {
-                    fixYear(field.pivotYear, &tm);
+                    fixYear(&field, &tm);
                 }
                 strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%dT%H:%M:%S",
                         &tm);
@@ -1119,9 +1137,8 @@ Layout * parseLayout(string layoutFileName, string argTableName,
 
             cJSON *jsonPivotYear = cJSON_GetObjectItem(jsonField, "pivotYear");
             if (jsonPivotYear != NULL) {
-                pLayout->fieldList[i].pivotYear = jsonPivotYear->valueint;
+                pLayout->fieldList[i].setPivotYear(jsonPivotYear->valueint);
             }
-
         }
 
         fieldCounter++;
