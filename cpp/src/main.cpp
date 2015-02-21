@@ -469,18 +469,26 @@ int parseDelimRecord(Layout &layout, void *pInfo, char *lineStr, int lineStrLen,
 }
 
 struct Buffer {
-#define BUFFER_MAX_SIZE 102400
     FILE *fp;
     int eofFlag;
-    int bufferSize;
-    char buffer[BUFFER_MAX_SIZE];
+    long bufferSize;
+    const long maxBufferSize;
+    char *buffer;
     int bufferIndex;
-    static const int fieldSize = BUFFER_MAX_SIZE;
-    char fieldStr[fieldSize];
-    Buffer() :
-            bufferSize(BUFFER_MAX_SIZE), fp(NULL), eofFlag(0), bufferIndex(
-            BUFFER_MAX_SIZE) {
+    const long maxFieldBufferSize;
+    char *fieldStr;
+    Buffer(FILE *inFp, long readBufferSize, long fieldBufferSize) :
+            fp(inFp), eofFlag(0), maxBufferSize(readBufferSize), maxFieldBufferSize(fieldBufferSize) {
+        buffer = new char[maxBufferSize];
+        bufferSize = maxBufferSize;
+        bufferIndex = bufferSize;
 
+        fieldStr = new char[maxFieldBufferSize];
+    }
+
+    ~Buffer() {
+        delete buffer;
+        delete fieldStr;
     }
 };
 
@@ -753,7 +761,7 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
                         len, SQLITE_TRANSIENT);
 #    else
                 rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1, lineStr + start, len,
-                        SQLITE_TRANSIENT);
+                SQLITE_TRANSIENT);
                 if (rc != SQLITE_OK) {
                     fprintf(stderr, "SQL error %d: text binding failed\n", rc);
                     return 1;
@@ -804,7 +812,7 @@ int parseFixedLenRecord(Layout &layout, char *lineStr, sqlite3_stmt *sqlStmt) {
                         len, SQLITE_TRANSIENT);
 #    else
                 rc = sqlite3_bind_text(sqlStmt, fieldCounter + 1, lineStr + start, len,
-                        SQLITE_TRANSIENT);
+                SQLITE_TRANSIENT);
                 if (rc != SQLITE_OK) {
                     fprintf(stderr, "SQL error %d: text binding failed\n", rc);
                     return 1;
@@ -1410,6 +1418,10 @@ OptionParser createParser() {
     parser.add_option("-s").dest("s").set_default("0").action("store_true").help("Show stats");
     parser.add_option("-p").dest("p").metavar("<comma-separated-pragma-list>").help(
             "Comma separated pragma which ran before creation of DB.");
+    parser.add_option("-b").dest("b").metavar("<N>").set_default("1048576").help(
+            "Read buffer size in bytes. Default: 1048576");
+    parser.add_option("-f").dest("f").metavar("<N>").set_default("1048576").help(
+            "Field buffer size in bytes. Default: 1048576");
 
     parser.epilog(getLayoutHelp() + getCSVLayoutHelpExample());
     return parser;
@@ -1433,6 +1445,8 @@ int main(int argc, char **argv) {
     bool isAppendMode = atoi(options["a"].c_str()) == 1 ? true : false;
     bool isDeleteMode = atoi(options["d"].c_str()) == 1 ? true : false;
     string pragmaList = options["p"];
+    long readBufferSize = atol(options["b"].c_str());
+    long fieldBufferSize = atol(options["f"].c_str());
 
     if (layoutFileName.length() == 0) {
         cout << "Layout file name cannot be empty" << endl;
@@ -1457,6 +1471,8 @@ int main(int argc, char **argv) {
         cout << "isShowStats=" << isShowStats << endl;
         cout << "isAppendMode=" << isAppendMode << endl;
         cout << "isDeleteMode=" << isDeleteMode << endl;
+        cout << "readBufferSize=" << readBufferSize << endl;
+        cout << "fieldBufferSize=" << fieldBufferSize << endl;
     }
 
     Layout *pLayout;
@@ -1612,9 +1628,7 @@ int main(int argc, char **argv) {
     char * line = NULL;
     size_t len = 0;
 //    size_t read;
-    Buffer buffer;
-    buffer.bufferIndex = buffer.bufferSize;
-    buffer.fp = fp;
+    Buffer buffer(fp, readBufferSize, fieldBufferSize);
     int parseRet = 0;
 //    while (getline(*inStream, line)) {
 //    while ((read = getline(&lineStr, &len, fp)) != -1) {
