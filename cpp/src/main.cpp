@@ -1535,6 +1535,14 @@ int main(int argc, char **argv) {
         return (1);
     }
 
+    rc = sqlite3_exec(db, "PRAGMA busy_timeout = 60000;", NULL, 0, &zErrMsg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+        return 1;
+    }
+
+
     int doesTableExist = checkIfTableExist(db, pLayout->name);
     if (isDebug)
         cout << "doesTableExist=" << doesTableExist << endl;
