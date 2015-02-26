@@ -526,6 +526,11 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer, sqlite3_stmt *sqlStm
                     buffer->bufferSize = fread(buffer->buffer, 1, buffer->bufferSize, buffer->fp);
                 }
             }
+            if (fieldLength == buffer->maxFieldBufferSize) {
+                fprintf(stderr, "Field length exceeds max field buffer size=%ld\n",
+                        buffer->maxFieldBufferSize);
+                return -3;
+            }
             buffer->fieldStr[fieldLength] = ch = buffer->buffer[buffer->bufferIndex];
             buffer->bufferIndex++;
             if (ch == separator || ch == '\n' || buffer->eofFlag == 1) {
@@ -1653,8 +1658,14 @@ int main(int argc, char **argv) {
 //        parseDelimRecord(*pLayout, NULL, lineStr, line.length(), sqlStmt);
 //        parseDelimRecord(*pLayout, NULL, lineStr, read, sqlStmt);
         parseRet = parseDelimRecord(*pLayout, &buffer, sqlStmt);
-        if (parseRet == -1)
-            break;
+        if (parseRet < 0) {
+            if (parseRet == -1)
+                break;
+            else if (parseRet == -3) {
+                fprintf(stderr, "Try increasing using -f <N>\n");
+                return -1;
+            }
+        }
 
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
