@@ -397,9 +397,37 @@ string OptionParser::format_help() const {
 
   return ss.str();
 }
+
+string OptionParser::format_short_help() const {
+  stringstream ss;
+
+  if (usage() != SUPPRESS_USAGE)
+    ss << get_usage() << endl;
+
+  if (description() != "")
+    ss << str_format(description(), 0, cols()) << endl;
+
+  ss << _("Options") << ":" << endl;
+  ss << format_option_help();
+
+  for (list<OptionGroup const*>::const_iterator it = _groups.begin(); it != _groups.end(); ++it) {
+    const OptionGroup& group = **it;
+    ss << endl << "  " << group.title() << ":" << endl;
+    if (group.group_description() != "")
+      ss << str_format(group.group_description(), 4, cols()) << endl;
+    ss << group.format_option_help(4);
+  }
+
+  return ss.str();
+}
 void OptionParser::print_help() const {
   cout << format_help();
 }
+
+void OptionParser::print_short_help() const {
+  cout << format_short_help();
+}
+
 
 void OptionParser::set_usage(const string& u) {
   string lower = u;

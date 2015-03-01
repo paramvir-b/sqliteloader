@@ -172,8 +172,10 @@ class OptionParser {
     }
 
     std::string format_help() const;
+    std::string format_short_help() const;
     std::string format_option_help(unsigned int indent = 2) const;
     void print_help() const;
+    void print_short_help() const;
 
     void set_usage(const std::string& u);
     std::string get_usage() const;
