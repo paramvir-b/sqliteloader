@@ -63,12 +63,13 @@ General layout structure is define in json format:
 
 *Layout Definition Parameters*
 
-name      : Layout name that will be used as table name. Can also be passed as an argument to utility.
-               Example: book_info
-type      : csv. 'csv' for delimited file
-               Example: csv
-separator : Separator used for file. Only valid for csv files.
-storeDateAsEPOC: Store date as EPOC seconds. This will help reduce file size.
+| Parameter Name | Description                                                                                 |
+| name           | Layout name that will be used as table name. Can also be passed as an argument to utility. 
+                   Example: book_info                                                                          |
+| type           | csv. 'csv' for delimited file
+                   Example: csv                                                                                |
+| separator      | Separator used for file. Only valid for csv files.                                          |
+| storeDateAsEPOC| Store date as EPOC seconds. This will help reduce file size.                                |
 
 *Layout Field Definition Parameters*
 
