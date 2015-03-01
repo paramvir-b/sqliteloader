@@ -14,13 +14,26 @@ numbers as numbers in db files as well as some way to parse date related data.
 All these needs leads for the development of this project. Apart from the above mentioned features,
 one of the key requirement for this project is performance.
 
+Features
+--------
+
+ * Highly performant by writing it in C/C++. It also used sqlite features to optimize for speed.
+ * Support triming text
+ * Support date/time input formats
+ * Support pivotYear for date/time
+ * Support missing value declaration for columns
+ * Separate types for int, real and text as opposed to always text with '.import' option of sqlite3
+   shell
+ * Support skipping of input fields in the csv file
+ * Support storing dates as text or EPOC
+
 Usage for project
 -----------------
 
 This project is available as a command line utility which can be used to create sqltie db files from
 csv files.
 
-TBD - Fixed length file support might come in future. Right now CSV looks like a better choice
+*TBD - Fixed length file support might come in future. Right now CSV looks like a better choice*
 
 Options
 -------
