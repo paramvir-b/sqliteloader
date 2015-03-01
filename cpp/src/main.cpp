@@ -200,21 +200,6 @@ struct DelimFileData {
     char separator;
 };
 
-struct Data {
-    char *str;
-    int len;
-    int actualLen;
-    int startIdx;
-    int endIdx;
-};
-
-void printStr(char *str, int start, int len) {
-    cout << "'";
-    for (int i = start; i < start + len; i++)
-        cout << *(str + i);
-    cout << "'" << endl;
-}
-
 inline void fixYear(Field *pField, struct tm *ptm) {
     int year = ptm->tm_year + 1900;
     int twoDigitYear = ((year / 10) % 10) * 10 + year % 10;
