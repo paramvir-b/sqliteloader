@@ -1054,7 +1054,7 @@ string getLayoutHelp() {
 
 OptionParser createParser() {
     OptionParser parser = OptionParser().description(
-            "Converts fixed length files to sqlite database");
+            "Converts csv files to sqlite database");
 
     parser.add_option("-t").dest("t").metavar("<table_name>").help("Table to be created");
     parser.add_option("-i").dest("i").metavar("<input_file>").help(
