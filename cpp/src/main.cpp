@@ -186,9 +186,10 @@ struct Layout {
     int fieldListLen;
     char type;
     char separator;
+    bool storeDateAsEPOC;
 
     Layout(const int fieldListSize) :
-            type('D'), separator('\t') {
+            type('D'), separator('\t'), storeDateAsEPOC(false) {
         fieldList = new Field[fieldListSize];
         fieldListLen = fieldListSize;
     }
@@ -203,6 +204,7 @@ struct Layout {
 
     friend ostream& operator<<(ostream &outStream, Layout &layout) {
         outStream << "[ " << "name=" << layout.name << ", type=" << layout.type;
+        outStream << ", storeDateAsEPOC=" << layout.storeDateAsEPOC;
         outStream << ", indexList(" << layout.indexList.size() << ")=[ ";
         for (int i = 0; i < layout.indexList.size(); i++) {
             outStream << layout.indexList[i] << ", ";
@@ -633,21 +635,37 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer, sqlite3_stmt *sqlStm
                 if (field.pivotYear != -1) {
                     fixYear(&field, &tm);
                 }
-                strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%d", &tm);
+                if (layout.storeDateAsEPOC) {
+                    time_t epoc = mktime(&tm);
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
-                sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring, 10,
-                        SQLITE_TRANSIENT);
+                    sqlite3_bind_int64(sqlStmt, bindFieldCounter, epoc);
 #    else
-                rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring, 10,
-                SQLITE_TRANSIENT);
+                    rc = sqlite3_bind_int64(sqlStmt, bindFieldCounter, epoc);
 
-                if (rc != SQLITE_OK) {
-                    fprintf(stderr, "SQL error %d: text binding failed\n", rc);
-                    return 1;
-                }
+                    if (rc != SQLITE_OK) {
+                        fprintf(stderr, "SQL error %d: date epoc binding failed\n", rc);
+                        return 1;
+                    }
 #    endif
 #endif
+                } else {
+                    strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%d", &tm);
+#ifndef DISABLE_SQL_CODE
+#    ifndef ENABLE_SQL_CHECKS
+                    sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring, 10,
+                            SQLITE_TRANSIENT);
+#    else
+                    rc = sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring, 10,
+                    SQLITE_TRANSIENT);
+
+                    if (rc != SQLITE_OK) {
+                        fprintf(stderr, "SQL error %d: date text binding failed\n", rc);
+                        return 1;
+                    }
+#    endif
+#endif
+                }
             }
             continue;
         }
@@ -902,7 +920,12 @@ Layout * parseLayout(string layoutFileName, string argTableName, bool isRetainCa
         }
     }
 
-    // Parse index part of layout
+    cJSON *jStoreDateAsEPOC = cJSON_GetObjectItem(root, "storeDateAsEPOC");
+    if (jStoreDateAsEPOC != NULL && strlen(jStoreDateAsEPOC->valuestring) > 0) {
+        pLayout->storeDateAsEPOC = strcmp(jStoreDateAsEPOC->valuestring, "true") == 0 ? 1 : 0;
+    }
+
+// Parse index part of layout
     char str[20];
     for (int i = 0; i < indexListCount; i++) {
         cJSON *jIndex = cJSON_GetArrayItem(jIndexList, i);
@@ -1106,8 +1129,16 @@ string getCreateTableQuery(Layout & layout) {
 
             createTableQry += field.name;
 
-            if (field.type == 'S' || field.type == 'D' || field.type == 'T') {
+            if (field.type == 'S' || field.type == 'T') {
                 createTableQry += " TEXT";
+            }
+
+            if (field.type == 'D') {
+                if (layout.storeDateAsEPOC) {
+                    createTableQry += " INTEGER";
+                } else {
+                    createTableQry += " TEXT";
+                }
             }
 
             if (field.type == 'I') {
@@ -1376,6 +1407,7 @@ string getLayoutHelp() {
                     "\n   type      : csv. 'csv' for delimited file"
                     "\n               Example: csv"
                     "\n   separator : Separator used for file. Only valid for csv files."
+                    "\n   storeDateAsEPOC: Store date as EPOC seconds. This will help reduce file size."
                     "\n Layout Field Definition Parameters:"
                     "\n   name     : Field name. It will become the column name in db"
                     "\n              Example: balance"
@@ -1547,7 +1579,6 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-
     int doesTableExist = checkIfTableExist(db, pLayout->name);
     if (isDebug)
         cout << "doesTableExist=" << doesTableExist << endl;
@@ -1591,7 +1622,7 @@ int main(int argc, char **argv) {
 //        return 1;
 //    }
 
-    // Switching off journal
+// Switching off journal
     rc = sqlite3_exec(db, "PRAGMA journal_mode = OFF;", NULL, 0, &zErrMsg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error: %s\n", zErrMsg);

@@ -14,34 +14,34 @@
       "format": "%Y-%m-%d"
     },
     {
+      "name": "time1",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time2",
+      "type": "time",
+      "format": "%d/%m/%Y-%H-%M-%S"
+    },
+    {
       "name": "date3",
-      "type": "date",
-      "format": "%Y-%m-%d"
-    },
-    {
-      "name": "date4",
-      "type": "date",
-      "format": "%d/%m/%Y"
-    },
-    {
-      "name": "date5",
       "type": "date",
       "format": "%Y%m"      
     },
     {
-      "name": "date6",
+      "name": "date4",
       "type": "date",
       "format": "%Y%m"
     },
     {
-      "name": "date7",
-      "type": "date",
-      "format": "%Y-%m-%d"
+      "name": "time3",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
     },
     {
-      "name": "date8",
+      "name": "time4",
       "type": "date",
-      "format": "%Y-%m-%d"
+      "format": "%Y-%m-%dT%H:%M:%S"
     }
   ]
 }

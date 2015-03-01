@@ -2,6 +2,7 @@
   "name": "inl",
   "type": "csv",
   "separator": "|",
+  "storeDateAsEPOC": "true",
   "fieldList": [
     {
       "name": "date1",
