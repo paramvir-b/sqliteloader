@@ -650,7 +650,8 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer, sqlite3_stmt *sqlStm
 #    endif
 #endif
                 } else {
-                    strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%d", &tm);
+                    sprintf(datestring, "%04d-%02d-%02d", (tm.tm_year + 1900), (tm.tm_mon + 1),
+                            tm.tm_mday);
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
                     sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring, 10,
@@ -676,7 +677,8 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer, sqlite3_stmt *sqlStm
                 if (field.pivotYear != -1) {
                     fixYear(&field, &tm);
                 }
-                strftime(datestring, MAX_DATE_STRING_LEN, "%Y-%m-%dT%H:%M:%S", &tm);
+                sprintf(datestring, "%04d-%02d-%02dT%02d:%02d:%02d", (tm.tm_year + 1900),
+                        (tm.tm_mon + 1), tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
                 sqlite3_bind_text(sqlStmt, bindFieldCounter, datestring,
