@@ -1389,7 +1389,7 @@ string getLayoutHelp() {
                     "\n   missingValue: If this is the value then it will be replaced with null in db"
                     "\n              Example: 2000"
                     "\n   isSkip   : If true, this field is skipped while parsing the input file. Default is false"
-                    "\n   isTrim   : If type is text, then if falfe, this field is NOT trimmed. Default is true"
+                    "\n   isTrim   : If type is text, then if false, this field is NOT trimmed. Default is true"
 //            "\n   length : Any integer number. Length for a given field. Only valid for flat files"
 //            "\n            Example: 7"
                     "\n Index Definition Parameters:"
