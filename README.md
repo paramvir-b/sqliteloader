@@ -52,14 +52,15 @@ Layout Definition
 
 General layout structure is define in json format:
 
-
-   <LayoutDefinition>
-     <IndexList>
-       <Index>
-         <IndexColumnList>
-           <IndexColumn>
-     <FieldDefinitionList>
-       <FieldDefinition>
+```text
+<LayoutDefinition>
+  <IndexList>
+    <Index>
+      <IndexColumnList>
+        <IndexColumn>
+  <FieldDefinitionList>
+    <FieldDefinition>
+```
 
 *Layout Definition Parameters*
 
