@@ -63,38 +63,36 @@ General layout structure is define in json format:
 
 *Layout Definition Parameters*
 
-| Parameter Name | Description                                                                                 |
-| name           | Layout name that will be used as table name. Can also be passed as an argument to utility. 
-                   Example: book_info                                                                          |
-| type           | csv. 'csv' for delimited file
-                   Example: csv                                                                                |
-| separator      | Separator used for file. Only valid for csv files.                                          |
-| storeDateAsEPOC| Store date as EPOC seconds. This will help reduce file size.                                |
+| Parameter Name | Description |
+|----------------|-------------|
+| name           | Layout name that will be used as table name. Can also be passed as an argument to utility.|
+| type           | csv. 'csv' for delimited file.|
+| separator      | Separator used for file. Only valid for csv files.|
+| storeDateAsEPOC| Store date as EPOC seconds. This will help reduce file size.|
 
 *Layout Field Definition Parameters*
 
-name     : Field name. It will become the column name in db
-              Example: balance
-type     : text/integer/real/date/time. 'text' text field like "hello".
-'integer' for integers like 10. 'real' for decimals like 5.6
-              Example: real
-format   : If type is date/time then we need to provide this. Use date format from http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html
-              Example: %m%d%Y for 11022014 which is 2014-02-11
-              Example: %d/%m/%Y-%H-%M-%S for 02/11/2014-21-56-53 which is 2014-02-11T21:56:53
-pivotYear: If type is date/time then we can provide pivot year. Refer to http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormatter.html#withPivotYear(int)
-              Example: 2000
-missingValue: If this is the value then it will be replaced with null in db
-              Example: 2000
-isSkip   : If true, this field is skipped while parsing the input file.  Default is false
-isTrim   : If type is text, then if false, this field is NOT trimmed. Default is true
+| Parameter Name | Description |
+|----------------|-------------|
+| name           | Field name. It will become the column name in db |
+| type           | text/integer/real/date/time. 'text' text field like "hello". 'integer' for integers like 10. 'real' for decimals like 5.6 |
+| format         | If type is date/time then we need to provide this. Use date format from http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html. Example: %m%d%Y for 11022014 which is 2014-02-11. %d/%m/%Y-%H-%M-%S for 02/11/2014-21-56-53 which is 2014-02-11T21:56:53 |
+| pivotYear      | If type is date/time then we can provide pivot year. Refer to http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormatter.html#withPivotYear(int). Example: 2000|
+| missingValue   | If this is the value then it will be replaced with null in db. |
+| isSkip         | If true, this field is skipped while parsing the input file.  Default is false |
+| isTrim         | If type is text, then if false, this field is NOT trimmed. Default is true |
 
 *Index Definition Parameters*
-name      : Name for the index. If left blank it will be auto generated.
-               Example: idx_col_name_1
+
+| Parameter Name | Description |
+|----------------|-------------|
+| name           | Name for the index. If left blank it will be auto generated.  Example: idx_col_name_1 |
 
 *Index Column Definition Parameters*
-name     : Column name on which index is based on.
-              Example: col_name
+
+| Parameter Name | Description |
+|----------------|-------------|
+| name           | Column name on which index is based on.|
 
 
 Example of csv layout:
