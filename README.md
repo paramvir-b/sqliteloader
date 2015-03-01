@@ -25,6 +25,7 @@ TBD - Fixed length file support might come in future. Right now CSV looks like a
 Options
 -------
 
+```text
   -h, --help            show this help message and exit
   --version             show program's version number and exit
   -t <table_name>       Table to be created
@@ -44,6 +45,7 @@ Options
                         Comma separated pragma which ran before creation of DB.
   -b <N>                Read buffer size in bytes. Default: 1048576
   -f <N>                Field buffer size in bytes. Default: 1048576
+```
 
 Layout Definition
 -----------------
