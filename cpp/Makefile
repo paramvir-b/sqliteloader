@@ -23,8 +23,8 @@ CC_LIBS=-lsqlite3
 
 OBJECT_MODE=64
 CC=g++
-CFLAGS+=-g -O -m$(OBJECT_MODE) -I$(CC_INC_DIR)
-LDFLAGS=-g -O -m$(OBJECT_MODE) $(CC_LIB_DIR)
+CFLAGS+=-g -Ofast -m$(OBJECT_MODE) -I$(CC_INC_DIR)
+LDFLAGS=-g -Ofast -m$(OBJECT_MODE) $(CC_LIB_DIR)
 
 
 all: $(EXE)
