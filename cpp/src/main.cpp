@@ -1038,8 +1038,7 @@ string getLayoutHelp() {
 }
 
 OptionParser createParser() {
-    OptionParser parser = OptionParser().description(
-            "Converts csv files to sqlite database");
+    OptionParser parser = OptionParser().description("Converts csv files to sqlite database");
 
     parser.add_option("-t").dest("t").metavar("<table_name>").help("Table to be created");
     parser.add_option("-i").dest("i").metavar("<input_file>").help(
@@ -1161,6 +1160,11 @@ int main(int argc, char **argv) {
     int rc;
     sqlite3 *db;
     char *zErrMsg = 0;
+
+    rc = sqlite3_config(SQLITE_CONFIG_SINGLETHREAD);
+    if (rc) {
+        fprintf(stderr, "Can't set thread mode to SQLITE_CONFIG_SINGLETHREAD\n");
+    }
 
     rc = sqlite3_open(dbFileName.c_str(), &db);
     if (rc) {
