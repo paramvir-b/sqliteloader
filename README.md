@@ -25,7 +25,7 @@ Features
  * Separate types for int, real and text as opposed to always text with '.import' option of sqlite3
    shell
  * Support skipping of input fields in the csv file
- * Support storing dates as text or EPOC
+ * Support storing dates as text or epoch
 
 Usage for project
 -----------------
@@ -77,12 +77,12 @@ General layout structure is define in json format:
 
 *Layout Definition Parameters*
 
-| Parameter Name | Description |
-|----------------|-------------|
-| name           | Layout name that will be used as table name. Can also be passed as an argument to utility.|
-| type           | csv. 'csv' for delimited file.|
-| separator      | Separator used for file. Only valid for csv files.|
-| storeDateAsEPOC| Store date as EPOC seconds. This will help reduce file size.|
+| Parameter Name  | Description |
+|-----------------|-------------|
+| name            | Layout name that will be used as table name. Can also be passed as an argument to utility.|
+| type            | csv. 'csv' for delimited file.|
+| separator       | Separator used for file. Only valid for csv files.|
+| storeDateAsEpoch| Store date as Epoch seconds. This will help reduce file size.|
 
 *Layout Field Definition Parameters*
 

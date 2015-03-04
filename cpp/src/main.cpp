@@ -162,10 +162,10 @@ struct Layout {
     int fieldListLen;
     char type;
     char separator;
-    bool storeDateAsEPOC;
+    bool storeDateAsEpoch;
 
     Layout(const int fieldListSize) :
-            type('D'), separator('\t'), storeDateAsEPOC(false) {
+            type('D'), separator('\t'), storeDateAsEpoch(false) {
         fieldList = new Field[fieldListSize];
         fieldListLen = fieldListSize;
     }
@@ -180,7 +180,7 @@ struct Layout {
 
     friend ostream& operator<<(ostream &outStream, Layout &layout) {
         outStream << "[ " << "name=" << layout.name << ", type=" << layout.type;
-        outStream << ", storeDateAsEPOC=" << layout.storeDateAsEPOC;
+        outStream << ", storeDateAsEpoch=" << layout.storeDateAsEpoch;
         outStream << ", indexList(" << layout.indexList.size() << ")=[ ";
         for (int i = 0; i < layout.indexList.size(); i++) {
             outStream << layout.indexList[i] << ", ";
@@ -389,16 +389,16 @@ inline int parseDelimRecord(Layout &layout, Buffer *buffer, sqlite3_stmt *sqlStm
                 if (field.pivotYear != -1) {
                     fixYear(&field, &tm);
                 }
-                if (layout.storeDateAsEPOC) {
-                    time_t epoc = mktime(&tm);
+                if (layout.storeDateAsEpoch) {
+                    time_t epoch = mktime(&tm);
 #ifndef DISABLE_SQL_CODE
 #    ifndef ENABLE_SQL_CHECKS
-                    sqlite3_bind_int64(sqlStmt, bindFieldCounter, epoc);
+                    sqlite3_bind_int64(sqlStmt, bindFieldCounter, epoch);
 #    else
-                    rc = sqlite3_bind_int64(sqlStmt, bindFieldCounter, epoc);
+                    rc = sqlite3_bind_int64(sqlStmt, bindFieldCounter, epoch);
 
                     if (rc != SQLITE_OK) {
-                        fprintf(stderr, "SQL error %d: date epoc binding failed\n", rc);
+                        fprintf(stderr, "SQL error %d: date epoch binding failed\n", rc);
                         return 1;
                     }
 #    endif
@@ -526,9 +526,9 @@ Layout * parseLayout(string layoutFileName, string argTableName, bool isRetainCa
         }
     }
 
-    cJSON *jStoreDateAsEPOC = cJSON_GetObjectItem(root, "storeDateAsEPOC");
-    if (jStoreDateAsEPOC != NULL && strlen(jStoreDateAsEPOC->valuestring) > 0) {
-        pLayout->storeDateAsEPOC = strcmp(jStoreDateAsEPOC->valuestring, "true") == 0 ? 1 : 0;
+    cJSON *jStoreDateAsEpoch = cJSON_GetObjectItem(root, "storeDateAsEpoch");
+    if (jStoreDateAsEpoch != NULL && strlen(jStoreDateAsEpoch->valuestring) > 0) {
+        pLayout->storeDateAsEpoch = strcmp(jStoreDateAsEpoch->valuestring, "true") == 0 ? 1 : 0;
     }
 
     // Parse index part of layout
@@ -740,7 +740,7 @@ string getCreateTableQuery(Layout & layout) {
             }
 
             if (field.type == 'D') {
-                if (layout.storeDateAsEPOC) {
+                if (layout.storeDateAsEpoch) {
                     createTableQry += " INTEGER";
                 } else {
                     createTableQry += " TEXT";
@@ -1011,7 +1011,7 @@ string getLayoutHelp() {
             "\n   type      : csv. 'csv' for delimited file"
             "\n               Example: csv"
             "\n   separator : Separator used for file. Only valid for csv files."
-            "\n   storeDateAsEPOC: Store date as EPOC seconds. This will help reduce file size."
+            "\n   storeDateAsEpoch: Store date as Epoch seconds. This will help reduce file size."
             "\n Layout Field Definition Parameters:"
             "\n   name     : Field name. It will become the column name in db"
             "\n              Example: balance"
