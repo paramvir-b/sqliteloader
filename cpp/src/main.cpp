@@ -1131,7 +1131,7 @@ int main(int argc, char **argv) {
         cout << *pLayout << endl;
 
     FILE *inStream;
-    FILE *fp;
+    FILE *fp = NULL;
 
     if (inputFileName.empty() || inputFileName.compare("-") == 0) {
         inStream = stdin;
@@ -1272,7 +1272,7 @@ int main(int argc, char **argv) {
     long commitCounter = 0;
     char * line = NULL;
     size_t len = 0;
-    Buffer buffer(fp, readBufferSize, fieldBufferSize);
+    Buffer buffer(inStream, readBufferSize, fieldBufferSize);
     int parseRet = 0;
     while (true) {
 
