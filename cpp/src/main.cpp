@@ -1281,6 +1281,7 @@ int main(int argc, char **argv) {
             if (parseRet == -1)
                 break;
             else if (parseRet == -3) {
+                fprintf(stderr, "Error occurred at record number=%ld", recordCounter);
                 fprintf(stderr, "Try increasing using -f <N>\n");
                 return -1;
             }
@@ -1300,10 +1301,12 @@ int main(int argc, char **argv) {
         if (rc == SQLITE_DONE) {
             rc = sqlite3_reset(sqlStmt);
             if (rc != SQLITE_OK) {
+                fprintf(stderr, "Error occurred at record number=%ld", recordCounter);
                 fprintf(stderr, "SQL error %d: reset failed\n", rc);
                 return 1;
             }
         } else {
+            fprintf(stderr, "Error occurred at record number=%ld", recordCounter);
             fprintf(stderr, "SQL error %d: step failed\n", rc);
             return 1;
         }
@@ -1311,12 +1314,14 @@ int main(int argc, char **argv) {
             commitCounter = 0;
             rc = sqlite3_exec(db, "END TRANSACTION;", NULL, 0, &zErrMsg);
             if (rc != SQLITE_OK) {
+                fprintf(stderr, "Error occurred at record number=%ld", recordCounter);
                 fprintf(stderr, "SQL error: %s\n", zErrMsg);
                 sqlite3_free(zErrMsg);
                 return 1;
             }
             rc = sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, 0, &zErrMsg);
             if (rc != SQLITE_OK) {
+                fprintf(stderr, "Error occurred at record number=%ld", recordCounter);
                 fprintf(stderr, "SQL error: %s\n", zErrMsg);
                 sqlite3_free(zErrMsg);
                 return 1;
