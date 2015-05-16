@@ -733,7 +733,7 @@ string getCreateTableQuery(Layout & layout) {
         Field &field = layout.fieldList[i];
         if (field.isSkip != 1) {
 
-            createTableQry += field.name;
+            createTableQry += "'" + field.name + "'";
 
             if (field.type == 'S' || field.type == 'T') {
                 createTableQry += " TEXT";
