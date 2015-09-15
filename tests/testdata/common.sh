@@ -36,9 +36,11 @@ run_sqlite_loader() {
     typeset workDir=$1
     typeset layoutFile=$2
     typeset inputFile=$3
-    typeset expOutputFile=$4
-    typeset readBufferSize=$5
-    typeset pragmaValues="$6"
+    typeset createTableName="$4"
+    typeset expTableName="$5"
+    typeset expOutputFile=$6
+    typeset readBufferSize=$7
+    typeset pragmaValues="$8"
     typeset inputOnlyFileName=${inputFile##*/}
     typeset outputFile=$workDir/${inputOnlyFileName%%.*}.db
     typeset actOutputFile=$workDir/${inputOnlyFileName%%.*}.act_csv
@@ -57,20 +59,28 @@ run_sqlite_loader() {
         fi
     fi
 
+    if [[ $createTableName != "" ]]; then
+        typeset createTableNameCmd="-t $createTableName"
+    fi
+    if [[ $expTableName == "" ]]; then
+        expTableName="$createTableName"
+    fi
+
     echo outputFile=$outputFile
 
     rm -f $outputFile;
     if [[ $pragmaValues == "" ]]; then
-        echo "time ./sqliteloader -v -l $layoutFile -i $inputFile -t t -o $outputFile ${readBufferSize:+-b $readBufferSize}"
-        time ./sqliteloader -v -s -l $layoutFile -i $inputFile -t t -o $outputFile ${readBufferSize:+-b $readBufferSize}
+        echo "time ./sqliteloader -v -l $layoutFile -i $inputFile $createTableNameCmd -o $outputFile ${readBufferSize:+-b $readBufferSize}"
+        time ./sqliteloader -v -s -l $layoutFile -i $inputFile $createTableNameCmd -o $outputFile ${readBufferSize:+-b $readBufferSize}
     else
-        echo "time ./sqliteloader -v -l $layoutFile -i $inputFile -t t -o $outputFile ${readBufferSize:+-b $readBufferSize} -p $pragmaValues"
-        time ./sqliteloader -v -s -l $layoutFile -i $inputFile -t t -o $outputFile ${readBufferSize:+-b $readBufferSize} -p "$pragmaValues"
+        echo "time ./sqliteloader -v -l $layoutFile -i $inputFile $createTableNameCmd -o $outputFile ${readBufferSize:+-b $readBufferSize} -p $pragmaValues"
+        time ./sqliteloader -v -s -l $layoutFile -i $inputFile $createTableNameCmd -o $outputFile ${readBufferSize:+-b $readBufferSize} -p "$pragmaValues"
     fi
 
     if [[ -e $expOutputFile ]]; then
-        echo "Comparing $outputFile against expected file : $expOutputFile"
-        printf "select * from t;" | sqlite3 $outputFile > $actOutputFile
+        echo "Comparing $outputFile against expected file : $expOutputFile with expTableName=$expTableName"
+        printf "select * from \"$expTableName\";\n"
+        printf "select * from \"$expTableName\";" | sqlite3 $outputFile > $actOutputFile
         echo diff $expOutputFile $actOutputFile
         diff $expOutputFile $actOutputFile
         rc=$?

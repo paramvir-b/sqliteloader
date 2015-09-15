@@ -728,12 +728,12 @@ string getCreateTableQuery(Layout & layout) {
     int fieldCounter = 0;
 
     string createTableQry;
-    createTableQry = "CREATE TABLE '" + layout.name + "' ( ";
+    createTableQry = "CREATE TABLE \"" + layout.name + "\" ( ";
     for (int i = 0; i < layout.fieldListLen; i++) {
         Field &field = layout.fieldList[i];
         if (field.isSkip != 1) {
 
-            createTableQry += "'" + field.name + "'";
+            createTableQry += "\"" + field.name + "\"";
 
             if (field.type == 'S' || field.type == 'T') {
                 createTableQry += " TEXT";
@@ -779,7 +779,7 @@ string getInsertQuery(Layout & layout) {
     for (int i = 0; i < layout.fieldListLen; i++) {
         Field &field = layout.fieldList[i];
         if (field.isSkip != 1) {
-            columnQry += "'" + field.name + "'";
+            columnQry += "\"" + field.name + "\"";
             valueQry += "?";
             if (fieldCounter < layout.fieldListLen - 1) {
                 columnQry += ", ";
@@ -791,7 +791,7 @@ string getInsertQuery(Layout & layout) {
     columnQry += ")";
     valueQry += ")";
     string insertBindQry;
-    insertBindQry = "INSERT INTO '" + layout.name + "'" + columnQry + valueQry + ";";
+    insertBindQry = "INSERT INTO \"" + layout.name + "\"" + columnQry + valueQry + ";";
     return insertBindQry;
 }
 
@@ -859,7 +859,7 @@ void deleteTable(sqlite3 *db, Layout &layout, bool isDebug) {
     int rc;
     char *zErrMsg = 0;
 
-    string delQuery = "DROP table '" + layout.name + "'";
+    string delQuery = "DROP table \"" + layout.name + "\"";
     if (isDebug) {
         cout << "delQuery=" << delQuery << endl;
     }
@@ -879,8 +879,8 @@ int createIndex(sqlite3 *db, const Layout& layout, string indexOnFieldName) {
     int rc;
     char *zErrMsg = 0;
 
-    string indexQry = "CREATE INDEX '" + layout.name + "_" + indexOnFieldName + "_index' ON '"
-            + layout.name + "' ('" + layout.fieldList[0].name + "');";
+    string indexQry = "CREATE INDEX \"" + layout.name + "_" + indexOnFieldName + "_index\" ON \""
+            + layout.name + "\" (\"" + layout.fieldList[0].name + "\");";
 
     rc = sqlite3_exec(db, indexQry.c_str(), NULL, NULL, &zErrMsg);
     if (rc != SQLITE_OK) {
@@ -902,14 +902,14 @@ int createIndex(sqlite3 *db, const string tableName, const Index& index, const b
     if (index.isUnique) {
         indexQry += " UNIQUE";
     }
-    indexQry += " INDEX '" + index.name + "' ON '" + tableName + "' (";
+    indexQry += " INDEX \"" + index.name + "\" ON \"" + tableName + "\" (";
 
     int indexColListLen = index.indexColumnList.size();
     for (int i = 0; i < indexColListLen; i++) {
         IndexColumn ic = index.indexColumnList[i];
-        indexQry += "'";
+        indexQry += "\"";
         indexQry += ic.name;
-        indexQry += "'";
+        indexQry += "\"";
         if (ic.query.length() > 0) {
             indexQry += " ";
             indexQry += ic.query;
