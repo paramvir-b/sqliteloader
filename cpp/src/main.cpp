@@ -733,6 +733,9 @@ string getCreateTableQuery(Layout & layout) {
         Field &field = layout.fieldList[i];
         if (field.isSkip != 1) {
 
+            if (fieldCounter != 0) {
+                createTableQry += ", ";
+            }
             createTableQry += "\"" + field.name + "\"";
 
             if (field.type == 'S' || field.type == 'T') {
@@ -755,16 +758,13 @@ string getCreateTableQuery(Layout & layout) {
                 createTableQry += " REAL";
             }
 
-            if (fieldCounter < layout.fieldListLen - 1) {
-                createTableQry += ", ";
-            }
+            fieldCounter++;
         }
         if (i > 0)
             field.endOffSet = layout.fieldList[i - 1].endOffSet + layout.fieldList[i].length;
         else
             field.endOffSet = field.length;
         recordLen += field.length;
-        fieldCounter++;
     }
     createTableQry += ");";
     return createTableQry;
@@ -779,14 +779,14 @@ string getInsertQuery(Layout & layout) {
     for (int i = 0; i < layout.fieldListLen; i++) {
         Field &field = layout.fieldList[i];
         if (field.isSkip != 1) {
-            columnQry += "\"" + field.name + "\"";
-            valueQry += "?";
-            if (fieldCounter < layout.fieldListLen - 1) {
+            if (fieldCounter != 0) {
                 columnQry += ", ";
                 valueQry += ", ";
             }
+            columnQry += "\"" + field.name + "\"";
+            valueQry += "?";
+            fieldCounter++;
         }
-        fieldCounter++;
     }
     columnQry += ")";
     valueQry += ")";

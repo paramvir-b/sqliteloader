@@ -162,6 +162,10 @@
     },
     {
       "name": "name with space"
+    },
+    {
+      "name": "miss2",
+      "isSkip": "true"
     }
   ]
 }
