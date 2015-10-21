@@ -1056,8 +1056,8 @@ OptionParser createParser() {
             "Append to existing table if it does exist");
     parser.add_option("-v").dest("v").set_default("0").action("store_true").help("Debug mode");
     parser.add_option("-s").dest("s").set_default("0").action("store_true").help("Show stats");
-    parser.add_option("-p").dest("p").metavar("<comma-separated-pragma-list>").help(
-            "Comma separated pragma which ran before creation of DB.");
+    parser.add_option("-p").dest("p").metavar("<semi-colon-separated-pragma-list>").help(
+            "Semi colon separated pragma which ran before creation of DB.\n Example: -p \"pragma page_size=4096;pragma cache_size=1000;");
     parser.add_option("-b").dest("b").metavar("<N>").set_default("1048576").help(
             "Read buffer size in bytes. Default: 1048576");
     parser.add_option("-f").dest("f").metavar("<N>").set_default("1048576").help(
