@@ -1181,34 +1181,6 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    int doesTableExist = checkIfTableExist(db, pLayout->name);
-    if (isDebug)
-        cout << "doesTableExist=" << doesTableExist << endl;
-    if (doesTableExist == 2) {
-        return 1;
-    }
-
-    try {
-        if (doesTableExist == 0 && isAppendMode) {
-            createTable(db, *pLayout, isDebug);
-        } else
-
-        if (doesTableExist == 0 && isDeleteMode) {
-            createTable(db, *pLayout, isDebug);
-        } else
-
-        if (doesTableExist == 1 && isDeleteMode) {
-            deleteTable(db, *pLayout, isDebug);
-            createTable(db, *pLayout, isDebug);
-        } else if (doesTableExist == 1 && isAppendMode) {
-        } else {
-            createTable(db, *pLayout, isDebug);
-        }
-    } catch (string& e) {
-        cout << e << endl;
-        return 1;
-    }
-
     rc = sqlite3_exec(db, "PRAGMA synchronous=OFF;", NULL, 0, &zErrMsg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
@@ -1242,6 +1214,35 @@ int main(int argc, char **argv) {
             return 1;
         }
     }
+
+    int doesTableExist = checkIfTableExist(db, pLayout->name);
+    if (isDebug)
+        cout << "doesTableExist=" << doesTableExist << endl;
+    if (doesTableExist == 2) {
+        return 1;
+    }
+
+    try {
+        if (doesTableExist == 0 && isAppendMode) {
+            createTable(db, *pLayout, isDebug);
+        } else
+
+        if (doesTableExist == 0 && isDeleteMode) {
+            createTable(db, *pLayout, isDebug);
+        } else
+
+        if (doesTableExist == 1 && isDeleteMode) {
+            deleteTable(db, *pLayout, isDebug);
+            createTable(db, *pLayout, isDebug);
+        } else if (doesTableExist == 1 && isAppendMode) {
+        } else {
+            createTable(db, *pLayout, isDebug);
+        }
+    } catch (string& e) {
+        cout << e << endl;
+        return 1;
+    }
+
     cInsertStartTime = time(NULL);
 
     rc = sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, 0, &zErrMsg);
