@@ -54,8 +54,9 @@ Options
   -a                    Append to existing table if it does exist
   -v                    Debug mode
   -s                    Show stats
-  -p <comma-separated-pragma-list>
-                        Comma separated pragma which ran before creation of DB.
+  -p <semi-colon-separated-pragma-list>
+                        Semi colon separated pragma which ran before creation of DB.
+                         Example: -p "pragma page_size=4096;pragma cache_size=1000;
   -b <N>                Read buffer size in bytes. Default: 1048576
   -f <N>                Field buffer size in bytes. Default: 1048576
 ```
