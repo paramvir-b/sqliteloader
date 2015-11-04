@@ -93,6 +93,50 @@ struct Field {
     }
 };
 
+struct PrimaryKeyColumn {
+    string name;
+    PrimaryKeyColumn(const string name) {
+        if (name.length() < 1) {
+            throw string("Primary key column name cannot be empty.");
+        }
+        this->name = name;
+    }
+
+    PrimaryKeyColumn(const string name, const string query) {
+        if (name.length() < 1) {
+            throw string("Primary key column name cannot be empty.");
+        }
+        this->name = name;
+    }
+
+    friend ostream& operator<<(ostream &outStream, PrimaryKeyColumn &primaryKeyColumn) {
+        outStream << "[ " << "name=" << primaryKeyColumn.name << " ]";
+        return outStream;
+    }
+};
+
+struct PrimaryKey {
+    vector<PrimaryKeyColumn> primaryKeyColumnList;
+    string conflictClause;
+
+    PrimaryKey() : conflictClause("") {
+    }
+
+    void addPrimaryKeyColumn(PrimaryKeyColumn pkc) {
+        primaryKeyColumnList.push_back(pkc);
+    }
+    friend ostream& operator<<(ostream &outStream, PrimaryKey &primaryKey) {
+        outStream << "[ " << "conflictClause=" << primaryKey.conflictClause;
+        outStream << ", primaryKeyColumnList(" << primaryKey.primaryKeyColumnList.size() << ")=[ ";
+        for (int i = 0; i < primaryKey.primaryKeyColumnList.size(); i++) {
+            outStream << primaryKey.primaryKeyColumnList[i] << ", ";
+        }
+        outStream << " ]";
+        outStream << " ]";
+        return outStream;
+    }
+};
+
 struct IndexColumn {
     string name;
     string query;
@@ -160,6 +204,8 @@ struct Layout {
     vector<Index> indexList;
     Field *fieldList;
     int fieldListLen;
+    bool isRowId;
+    PrimaryKey primaryKey;
     char type;
     char separator;
     bool storeDateAsEpoch;
@@ -181,6 +227,8 @@ struct Layout {
     friend ostream& operator<<(ostream &outStream, Layout &layout) {
         outStream << "[ " << "name=" << layout.name << ", type=" << layout.type;
         outStream << ", storeDateAsEpoch=" << layout.storeDateAsEpoch;
+        outStream << ", primaryKey=" << layout.primaryKey;
+        outStream << ", isRowId=" << layout.isRowId;
         outStream << ", indexList(" << layout.indexList.size() << ")=[ ";
         for (int i = 0; i < layout.indexList.size(); i++) {
             outStream << layout.indexList[i] << ", ";
@@ -597,6 +645,45 @@ Layout * parseLayout(string layoutFileName, string argTableName, bool isRetainCa
 
     }
 
+    cJSON *jisRowId = cJSON_GetObjectItem(root, "isRowId");
+    pLayout->isRowId = true;
+    if (jisRowId != NULL) {
+       if(strcmp(jisRowId->valuestring, "false") == 0) {
+           pLayout->isRowId = false;
+       }
+    }
+
+    cJSON *jprimaryKey = cJSON_GetObjectItem(root, "primaryKey");
+    bool hadPrimaryKey = false;
+    if(jprimaryKey != NULL) {
+        cJSON *jPKColumnList = cJSON_GetObjectItem(jprimaryKey, "columnList");
+        int pkColListCount = jPKColumnList != NULL ? cJSON_GetArraySize(jPKColumnList) : 0;
+        if (pkColListCount != 0) {
+            for(int i = 0; i < pkColListCount; i++) {
+                cJSON *jsonPKCol = cJSON_GetArrayItem(jPKColumnList, i);
+                string pkColumnName =
+                    cJSON_GetObjectItem(jsonPKCol, "name") != NULL ?
+                            cJSON_GetObjectItem(jsonPKCol, "name")->valuestring : "";
+                if (pkColumnName.length() < 1) {
+                    char str[20];
+                    sprintf(str, "%d", (i + 1));
+                    string errStr = "Primary key empty at index ";
+                    errStr += str;
+                    errStr += ". Primary key col name cannot be empty";
+                    throw errStr;
+                }
+                PrimaryKeyColumn *ppkc = new PrimaryKeyColumn(pkColumnName);
+                pLayout->primaryKey.addPrimaryKeyColumn(*ppkc);
+            }
+            hadPrimaryKey = true;
+        }
+    }
+
+    if(hadPrimaryKey == false && pLayout->isRowId == false) {
+        // FIXME throw exception
+        throw string("If isRowId is false then we have to specify Primary key");
+    }
+
     for (int i = 0; i < fieldListCount; i++) {
         cJSON *jsonField = cJSON_GetArrayItem(fieldList, i);
 
@@ -727,6 +814,7 @@ string getCreateTableQuery(Layout & layout) {
     int recordLen = 0;
     int fieldCounter = 0;
 
+    int primaryKeyColumnListLen = layout.primaryKey.primaryKeyColumnList.size();
     string createTableQry;
     createTableQry = "CREATE TABLE \"" + layout.name + "\" ( ";
     for (int i = 0; i < layout.fieldListLen; i++) {
@@ -757,6 +845,9 @@ string getCreateTableQuery(Layout & layout) {
             if (field.type == 'R') {
                 createTableQry += " REAL";
             }
+            if(primaryKeyColumnListLen == 1 && field.name.compare(layout.primaryKey.primaryKeyColumnList[0].name) == 0) {
+                createTableQry += " PRIMARY KEY";
+            }
 
             fieldCounter++;
         }
@@ -766,7 +857,25 @@ string getCreateTableQuery(Layout & layout) {
             field.endOffSet = field.length;
         recordLen += field.length;
     }
-    createTableQry += ");";
+
+    if(primaryKeyColumnListLen > 1) {
+
+        createTableQry += ", PRIMARY KEY ( ";
+        for(int i = 0; i < primaryKeyColumnListLen; i++) {
+            PrimaryKeyColumn pkc = layout.primaryKey.primaryKeyColumnList[i];
+
+            createTableQry += "\"" + pkc.name + "\"";
+
+            if(i < primaryKeyColumnListLen - 1) createTableQry += ",";
+        }
+        createTableQry += ")";
+    }
+
+    createTableQry += ")";
+    if(layout.isRowId == false) {
+        createTableQry += " WITHOUT ROWID";
+    }
+    createTableQry += ";";
     return createTableQry;
 }
 
