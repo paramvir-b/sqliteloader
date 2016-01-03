@@ -93,38 +93,17 @@ struct Field {
     }
 };
 
-struct PrimaryKeyColumn {
-    string name;
-    PrimaryKeyColumn(const string name) {
-        if (name.length() < 1) {
-            throw string("Primary key column name cannot be empty.");
-        }
-        this->name = name;
-    }
-
-    PrimaryKeyColumn(const string name, const string query) {
-        if (name.length() < 1) {
-            throw string("Primary key column name cannot be empty.");
-        }
-        this->name = name;
-    }
-
-    friend ostream& operator<<(ostream &outStream, PrimaryKeyColumn &primaryKeyColumn) {
-        outStream << "[ " << "name=" << primaryKeyColumn.name << " ]";
-        return outStream;
-    }
-};
-
 struct PrimaryKey {
-    vector<PrimaryKeyColumn> primaryKeyColumnList;
+    vector<string> primaryKeyColumnList;
     string conflictClause;
 
     PrimaryKey() : conflictClause("") {
     }
 
-    void addPrimaryKeyColumn(PrimaryKeyColumn pkc) {
+    void addPrimaryKeyColumn(string pkc) {
         primaryKeyColumnList.push_back(pkc);
     }
+
     friend ostream& operator<<(ostream &outStream, PrimaryKey &primaryKey) {
         outStream << "[ " << "conflictClause=" << primaryKey.conflictClause;
         outStream << ", primaryKeyColumnList(" << primaryKey.primaryKeyColumnList.size() << ")=[ ";
@@ -653,36 +632,6 @@ Layout * parseLayout(string layoutFileName, string argTableName, bool isRetainCa
        }
     }
 
-    cJSON *jprimaryKey = cJSON_GetObjectItem(root, "primaryKey");
-    bool hadPrimaryKey = false;
-    if(jprimaryKey != NULL) {
-        cJSON *jPKColumnList = cJSON_GetObjectItem(jprimaryKey, "columnList");
-        int pkColListCount = jPKColumnList != NULL ? cJSON_GetArraySize(jPKColumnList) : 0;
-        if (pkColListCount != 0) {
-            for(int i = 0; i < pkColListCount; i++) {
-                cJSON *jsonPKCol = cJSON_GetArrayItem(jPKColumnList, i);
-                string pkColumnName =
-                    cJSON_GetObjectItem(jsonPKCol, "name") != NULL ?
-                            cJSON_GetObjectItem(jsonPKCol, "name")->valuestring : "";
-                if (pkColumnName.length() < 1) {
-                    char str[20];
-                    sprintf(str, "%d", (i + 1));
-                    string errStr = "Primary key empty at index ";
-                    errStr += str;
-                    errStr += ". Primary key col name cannot be empty";
-                    throw errStr;
-                }
-                PrimaryKeyColumn *ppkc = new PrimaryKeyColumn(pkColumnName);
-                pLayout->primaryKey.addPrimaryKeyColumn(*ppkc);
-            }
-            hadPrimaryKey = true;
-        }
-    }
-
-    if(hadPrimaryKey == false && pLayout->isRowId == false) {
-        // FIXME throw exception
-        throw string("If isRowId is false then we have to specify Primary key");
-    }
 
     for (int i = 0; i < fieldListCount; i++) {
         cJSON *jsonField = cJSON_GetArrayItem(fieldList, i);
@@ -804,6 +753,39 @@ Layout * parseLayout(string layoutFileName, string argTableName, bool isRetainCa
         fieldCounter++;
     }
 
+    cJSON *jprimaryKey = cJSON_GetObjectItem(root, "primaryKey");
+    bool hadPrimaryKey = false;
+    if(jprimaryKey != NULL) {
+        cJSON *jPKColumnList = cJSON_GetObjectItem(jprimaryKey, "columnList");
+        int pkColListCount = jPKColumnList != NULL ? cJSON_GetArraySize(jPKColumnList) : 0;
+        if (pkColListCount != 0) {
+            for(int i = 0; i < pkColListCount; i++) {
+                cJSON *jsonPKCol = cJSON_GetArrayItem(jPKColumnList, i);
+                string pkColumnName =
+                    cJSON_GetObjectItem(jsonPKCol, "name") != NULL ?
+                            cJSON_GetObjectItem(jsonPKCol, "name")->valuestring : "";
+                if (pkColumnName.length() < 1) {
+                    char str[20];
+                    sprintf(str, "%d", (i + 1));
+                    string errStr = "Primary key empty at index ";
+                    errStr += str;
+                    errStr += ". Primary key col name cannot be empty";
+                    throw errStr;
+                }
+                if (!isRetainCase) {
+                    pkColumnName = to_lower_copy(pkColumnName);
+                }
+                pLayout->primaryKey.addPrimaryKeyColumn(pkColumnName);
+            }
+            hadPrimaryKey = true;
+        }
+    }
+
+    if(hadPrimaryKey == false && pLayout->isRowId == false) {
+        // FIXME throw exception
+        throw string("If isRowId is false then we have to specify Primary key");
+    }
+
     cJSON_Delete(root);
 
     return pLayout;
@@ -845,7 +827,7 @@ string getCreateTableQuery(Layout & layout) {
             if (field.type == 'R') {
                 createTableQry += " REAL";
             }
-            if(primaryKeyColumnListLen == 1 && field.name.compare(layout.primaryKey.primaryKeyColumnList[0].name) == 0) {
+            if(primaryKeyColumnListLen == 1 && field.name.compare(layout.primaryKey.primaryKeyColumnList[0]) == 0) {
                 createTableQry += " PRIMARY KEY";
             }
 
@@ -862,9 +844,9 @@ string getCreateTableQuery(Layout & layout) {
 
         createTableQry += ", PRIMARY KEY ( ";
         for(int i = 0; i < primaryKeyColumnListLen; i++) {
-            PrimaryKeyColumn pkc = layout.primaryKey.primaryKeyColumnList[i];
+            string pkc = layout.primaryKey.primaryKeyColumnList[i];
 
-            createTableQry += "\"" + pkc.name + "\"";
+            createTableQry += "\"" + pkc + "\"";
 
             if(i < primaryKeyColumnListLen - 1) createTableQry += ",";
         }
