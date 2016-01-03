@@ -203,6 +203,32 @@ struct Layout {
         indexList.push_back(index);
     }
 
+    string getAllFieldNameByCSV() {
+        string retStr;
+        for (int i = 0; i < fieldListLen; i++) {
+            retStr += "\"" + fieldList[i].name + "\""; 
+            if(i < fieldListLen - 1) retStr += ",";
+        }
+
+        return retStr;
+    }
+
+    void addPrimaryKeyColumn(string pkc) {
+
+        if(fieldList == NULL) throw string("No layout defined so cannot specify primary key");
+
+        bool foundFlag = false;
+        for (int i = 0; i < fieldListLen; i++) {
+            if(fieldList[i].name.compare(pkc) == 0) {
+                foundFlag = true;
+                break;
+            }
+        }
+
+        if(!foundFlag) throw string("Invalid primary key column specified columnName: \"" + pkc + "\". Valid columns are: " + getAllFieldNameByCSV());
+        primaryKey.addPrimaryKeyColumn(pkc);
+    }
+
     friend ostream& operator<<(ostream &outStream, Layout &layout) {
         outStream << "[ " << "name=" << layout.name << ", type=" << layout.type;
         outStream << ", storeDateAsEpoch=" << layout.storeDateAsEpoch;
@@ -775,7 +801,7 @@ Layout * parseLayout(string layoutFileName, string argTableName, bool isRetainCa
                 if (!isRetainCase) {
                     pkColumnName = to_lower_copy(pkColumnName);
                 }
-                pLayout->primaryKey.addPrimaryKeyColumn(pkColumnName);
+                pLayout->addPrimaryKeyColumn(pkColumnName);
             }
             hadPrimaryKey = true;
         }
