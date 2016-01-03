@@ -72,9 +72,19 @@ run_sqlite_loader() {
     if [[ $pragmaValues == "" ]]; then
         echo "time ./sqliteloader -v -l $layoutFile -i $inputFile $createTableNameCmd -o $outputFile ${readBufferSize:+-b $readBufferSize}"
         time ./sqliteloader -v -s -l $layoutFile -i $inputFile $createTableNameCmd -o $outputFile ${readBufferSize:+-b $readBufferSize}
+        rc=$?
+        if (( rc != 0 )); then
+            "sqliteloader command faild"
+            exit 1
+        fi
     else
         echo "time ./sqliteloader -v -l $layoutFile -i $inputFile $createTableNameCmd -o $outputFile ${readBufferSize:+-b $readBufferSize} -p $pragmaValues"
         time ./sqliteloader -v -s -l $layoutFile -i $inputFile $createTableNameCmd -o $outputFile ${readBufferSize:+-b $readBufferSize} -p "$pragmaValues"
+        rc=$?
+        if (( rc != 0 )); then
+            "sqliteloader command faild"
+            exit 1
+        fi
     fi
 
     if [[ -e $expOutputFile ]]; then
