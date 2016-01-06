@@ -597,8 +597,8 @@ Layout * parseLayout(string layoutFileName, string argTableName, bool isRetainCa
         bool isUnique = false;
         isUnique = strcmp(isUniqueStr.c_str(), "true") == 0;
         string whereClause =
-                cJSON_GetObjectItem(jIndex, "where") != NULL ?
-                        cJSON_GetObjectItem(jIndex, "where")->valuestring : "";
+                cJSON_GetObjectItem(jIndex, "whereClause") != NULL ?
+                        cJSON_GetObjectItem(jIndex, "whereClause")->valuestring : "";
         cJSON *jColumnList = cJSON_GetObjectItem(jIndex, "columnList");
         int columnListLen = cJSON_GetArraySize(jColumnList);
 
@@ -1038,7 +1038,7 @@ int createIndex(sqlite3 *db, const string tableName, const Index& index, const b
     indexQry += ")";
 
     if (index.whereClause.length() > 0) {
-        indexQry += " ";
+        indexQry += " where ";
         indexQry += index.whereClause;
     }
     indexQry += ";";
@@ -1063,14 +1063,22 @@ string getCSVLayoutHelpExample() {
             "\n    \"name\" : \"in\","
             "\n    \"type\" : \"csv\","
             "\n    \"separator\" : \"   \","
+            "\n    \"isRowId\" : \"true\","
+            "\n    \"primaryKey\" : {"
+            "\n      \"columnList\" : ["
+            "\n         {"
+            "\n            \"name\" : \"record_id\""
+            "\n         }"
+            "\n       ]"
+            "\n     },"
             "\n    \"indexList\": ["
             "\n       {"
             "\n            \"columnList\": ["
             "\n                {"
-            "\n                    \"name\": \"rid1\""
+            "\n                    \"name\": \"name\""
             "\n                },"
             "\n                {"
-            "\n                    \"name\": \"rid2\""
+            "\n                    \"name\": \"balance\""
             "\n                }"
             "\n            ]"
             "\n       }"
@@ -1115,6 +1123,8 @@ string getLayoutHelp() {
     return "\n\nLayout definition:"
             "\n General layout structure is define in json format:"
             "\n   <LayoutDefinition>"
+            "\n     <PrimaryKey>"
+            "\n       <PrimaryKeyColumnList>"
             "\n     <IndexList>"
             "\n       <Index>"
             "\n         <IndexColumnList>"
@@ -1122,13 +1132,17 @@ string getLayoutHelp() {
             "\n     <FieldDefinitionList>"
             "\n       <FieldDefinition>"
             "\n Layout Definition Parameters:"
-            "\n   name      : Layout name that will be used as table name. Can also be passed as an argument to utility."
+            "\n   name       : Layout name that will be used as table name. Can also be passed as an argument to utility."
             "\n               Example: book_info"
             //"\n   type      : csv/flat. 'csv' for delimited file and 'flat' for flat files"
-            "\n   type      : csv. 'csv' for delimited file"
+            "\n   type       : csv. 'csv' for delimited file"
             "\n               Example: csv"
-            "\n   separator : Separator used for file. Only valid for csv files."
+            "\n   separator  : Separator used for file. Only valid for csv files."
             "\n   storeDateAsEpoch: Store date as Epoch seconds. This will help reduce file size."
+            "\n   isRowId    : Controls creation of internal row id column in sqlite db file. Refer for details https://www.sqlite.org/withoutrowid.html"
+            "\n   fieldList  : Array of field definitions"
+            "\n   primaryKey : Primary key definitions"
+            "\n   indexList  : Index definitions array"
             "\n Layout Field Definition Parameters:"
             "\n   name     : Field name. It will become the column name in db"
             "\n              Example: balance"
@@ -1145,9 +1159,17 @@ string getLayoutHelp() {
             "\n   isTrim   : If type is text, then if false, this field is NOT trimmed. Default is true"
             //"\n   length : Any integer number. Length for a given field. Only valid for flat files"
             //"\n            Example: 7"
+            "\n Primary Key Definition Parameters:"
+            "\n   columnList : Column list of all column names of primary key"
+            "\n Primary Key Column List Definition Parameters:"
+            "\n   name     : Column name."
             "\n Index Definition Parameters:"
-            "\n   name      : Name for the index. If left blank it will be auto generated."
-            "\n               Example: idx_col_name_1"
+            "\n   name        : Name for the index. If left blank it will be auto generated."
+            "\n                  Example: idx_col_name_1"
+            "\n   isUnique    : Is the index unique"
+            "\n   whereClause : Where clause for creating partial index. \"WHERE\" will be appended automatically."
+            "\n   columnList  : Index column definition array."
+            "\n                  Example: idx_col_name_1"
             "\n Index Column Definition Parameters:"
             "\n   name     : Column name on which index is based on."
             "\n              Example: col_name"

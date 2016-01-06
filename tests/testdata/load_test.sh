@@ -86,6 +86,19 @@ fi
 
 run_sqlite_loader $WORK_DIR in1_big_full_layout.json in1_big.csv "" "table name" in1_big_exp.csv "$READ_BUFFER_SIZE" "$PRAGMA_VALUES"
 run_sqlite_loader $WORK_DIR in1_big_full_no_skip_layout.json in1_big_no_skip.csv "t" "" in1_big_no_skip_exp.csv "$READ_BUFFER_SIZE" "$PRAGMA_VALUES"
+
+typeset smallLoadFile=$LOAD_DIR/in1_big_small_load.csv
+time ./createLoadTestFile.py $WORK_DIR in1_big_no_skip.csv $smallLoadFile 10 $forceCreate
+
+rm db_index_unique
+ln -s $smallLoadFile db_index_unique
+run_sqlite_loader $WORK_DIR in1_big_is_unique_layout.json db_index_unique "" "" "" "$READ_BUFFER_SIZE" "$PRAGMA_VALUES"
+
+rm db_index_where_clause
+ln -s $smallLoadFile db_index_where_clause
+run_sqlite_loader $WORK_DIR in1_big_where_clause_layout.json db_index_where_clause "" "" "" "$READ_BUFFER_SIZE" "$PRAGMA_VALUES"
+exit 1
+
 typeset loadFile=$LOAD_DIR/in1_big_no_skip_${NUM_COUNT}.csv
 #time create_load_test_file $WORK_DIR in1_big_no_skip.csv $loadFile $NUM_COUNT $forceCreate
 time ./createLoadTestFile.py $WORK_DIR in1_big_no_skip.csv $loadFile $NUM_COUNT $forceCreate

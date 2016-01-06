@@ -1,0 +1,154 @@
+{
+  "name": "t",
+  "type": "csv",
+  "separator": "\t",
+   "indexList": [
+     {
+        "columnList": [
+           {
+               "name": "mypk1"
+           }
+        ]
+     }
+    ],
+  "fieldList": [
+    {
+      "name": "mypk1",
+      "type": "integer"
+    },
+    {
+      "name": "miss1"
+    },
+    {
+      "name": "rid1",
+      "type": "integer"
+    },
+    {
+      "name": "rid2",
+      "type": "integer"
+    },
+    {
+      "name": "rid3",
+      "type": "integer"
+    },
+    {
+      "name": "rid4",
+      "type": "integer"
+    },
+    {
+      "name": "rid5",
+      "type": "integer"
+    },
+    {
+      "name": "rid6",
+      "type": "integer"
+    },
+    {
+      "name": "rid7",
+      "type": "integer"
+    },
+    {
+      "name": "rid8",
+      "type": "integer"
+    },
+    {
+      "name": "name1",
+      "isTrim": "false"
+    },
+    {
+      "name": "name2"
+    },
+    {
+      "name": "name3"
+    },
+    {
+      "name": "name4"
+    },
+    {
+      "name": "name5"
+    },
+    {
+      "name": "name6"
+    },
+    {
+      "name": "name7"
+    },
+    {
+      "name": "name8"
+    },
+    {
+      "name": "balance1",
+      "type": "real"
+    },
+    {
+      "name": "balance2",
+      "type": "real"
+    },
+    {
+      "name": "balance3",
+      "type": "real"
+    },
+    {
+      "name": "balance4",
+      "type": "real"
+    },
+    {
+      "name": "balance5",
+      "type": "real"
+    },
+    {
+      "name": "balance6",
+      "type": "real"
+    },
+    {
+      "name": "balance7",
+      "type": "real"
+    },
+    {
+      "name": "balance8",
+      "type": "real"
+    },
+    {
+      "name": "date1",
+      "type": "date",
+      "format": "%m%d%Y"
+    },
+    {
+      "name": "date2",
+      "type": "date",
+      "format": "%Y-%m-%d"
+    },
+    {
+      "name": "time1",
+      "type": "time",
+      "format": "%Y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time2",
+      "type": "time",
+      "format": "%d/%m/%Y-%H-%M-%S"
+    },
+    {
+      "name": "date3",
+      "type": "date",
+      "format": "%y%m"
+    },
+    {
+      "name": "date4",
+      "type": "date",
+      "format": "%y%m",
+      "pivotYear": 2000
+    },
+    {
+      "name": "time3",
+      "type": "time",
+      "format": "%y-%m-%dT%H:%M:%S"
+    },
+    {
+      "name": "time4",
+      "type": "date",
+      "format": "%y-%m-%dT%H:%M:%S",
+      "pivotYear": 2000
+    }
+  ]
+}

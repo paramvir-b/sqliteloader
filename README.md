@@ -68,6 +68,8 @@ General layout structure is define in json format:
 
 ```text
 <LayoutDefinition>
+  <PrimaryKey>
+    <PrimaryKeyColumnList>
   <IndexList>
     <Index>
       <IndexColumnList>
@@ -84,6 +86,10 @@ General layout structure is define in json format:
 | type            | csv. 'csv' for delimited file.|
 | separator       | Separator used for file. Only valid for csv files.|
 | storeDateAsEpoch| Store date as Epoch seconds. This will help reduce file size.|
+| isRowId         | Controls creation of internal row id column in sqlite db file.  Refer for details https://www.sqlite.org/withoutrowid.html |
+| fieldList       | Array of field definitions |
+| primaryKey      | Primary key definitions |
+| indexList       | Index definitions array |
 
 *Layout Field Definition Parameters*
 
@@ -97,11 +103,26 @@ General layout structure is define in json format:
 | isSkip         | If true, this field is skipped while parsing the input file.  Default is false |
 | isTrim         | If type is text, then if false, this field is NOT trimmed. Default is true |
 
+*Primary Key Definition Parameters*
+
+| Parameter Name | Description |
+|----------------|-------------|
+| columnList     | Column list of all column names of primary key |
+
+*Primary Key Column List Definition Parameters*
+
+| Parameter Name | Description |
+|----------------|-------------|
+| name           | Column name |
+
 *Index Definition Parameters*
 
 | Parameter Name | Description |
 |----------------|-------------|
 | name           | Name for the index. If left blank it will be auto generated.  Example: idx_col_name_1 |
+| isUnique       | Is the index unique |
+| whereClause    | Where clause for creating partial index. "WHERE" will be appended automatically. |
+| columnList     | Index column definition array. Example: idx_col_name_1 |
 
 *Index Column Definition Parameters*
 
@@ -118,14 +139,22 @@ Example of csv layout:
     "name" : "in",
     "type" : "csv",
     "separator" : "   ",
+    "isRowId" : "true",
+    "primaryKey" : {
+      "columnList" : [
+         {
+            "name" : "record_id"
+         }
+       ]
+     },
     "indexList": [
        {
             "columnList": [
                 {
-                    "name": "rid1"
+                    "name": "name"
                 },
                 {
-                    "name": "rid2"
+                    "name": "balance"
                 }
             ]
        }
