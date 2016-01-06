@@ -86,7 +86,7 @@ General layout structure is define in json format:
 | type            | csv. 'csv' for delimited file.|
 | separator       | Separator used for file. Only valid for csv files.|
 | storeDateAsEpoch| Store date as Epoch seconds. This will help reduce file size.|
-| isRowId         | Controls creation of internal row id column in sqlite db file.  Refer for details https://www.sqlite.org/withoutrowid.html |
+| isRowId         | Controls creation of internal row id column in sqlite db file. Default is true. Refer for details https://www.sqlite.org/withoutrowid.html |
 | fieldList       | Array of field definitions |
 | primaryKey      | Primary key definitions |
 | indexList       | Index definitions array |
@@ -120,7 +120,7 @@ General layout structure is define in json format:
 | Parameter Name | Description |
 |----------------|-------------|
 | name           | Name for the index. If left blank it will be auto generated.  Example: idx_col_name_1 |
-| isUnique       | Is the index unique |
+| isUnique       | Creates unique index if true. Default is false |
 | whereClause    | Where clause for creating partial index. "WHERE" will be appended automatically. |
 | columnList     | Index column definition array. Example: idx_col_name_1 |
 
