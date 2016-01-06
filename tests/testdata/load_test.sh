@@ -97,7 +97,6 @@ run_sqlite_loader $WORK_DIR in1_big_is_unique_layout.json db_index_unique "" "" 
 rm db_index_where_clause
 ln -s $smallLoadFile db_index_where_clause
 run_sqlite_loader $WORK_DIR in1_big_where_clause_layout.json db_index_where_clause "" "" "" "$READ_BUFFER_SIZE" "$PRAGMA_VALUES"
-exit 1
 
 typeset loadFile=$LOAD_DIR/in1_big_no_skip_${NUM_COUNT}.csv
 #time create_load_test_file $WORK_DIR in1_big_no_skip.csv $loadFile $NUM_COUNT $forceCreate
