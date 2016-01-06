@@ -93,10 +93,12 @@ time ./createLoadTestFile.py $WORK_DIR in1_big_no_skip.csv $smallLoadFile 10 $fo
 rm db_index_unique
 ln -s $smallLoadFile db_index_unique
 run_sqlite_loader $WORK_DIR in1_big_is_unique_layout.json db_index_unique "" "" "" "$READ_BUFFER_SIZE" "$PRAGMA_VALUES"
+rm db_index_unique
 
 rm db_index_where_clause
 ln -s $smallLoadFile db_index_where_clause
 run_sqlite_loader $WORK_DIR in1_big_where_clause_layout.json db_index_where_clause "" "" "" "$READ_BUFFER_SIZE" "$PRAGMA_VALUES"
+rm db_index_where_clause
 
 typeset loadFile=$LOAD_DIR/in1_big_no_skip_${NUM_COUNT}.csv
 #time create_load_test_file $WORK_DIR in1_big_no_skip.csv $loadFile $NUM_COUNT $forceCreate
@@ -106,12 +108,13 @@ rm key_indexbased
 ln -s $loadFile key_indexbased
 # Create default db for load
 run_sqlite_loader $WORK_DIR in1_big_full_rand_layout.json key_indexbased "" "" "" "$READ_BUFFER_SIZE" "$PRAGMA_VALUES"
+rm key_indexbased
 
 rm key_pkbased
 ln -s $loadFile key_pkbased
 # Create db without row id
 run_sqlite_loader $WORK_DIR in1_big_full_rand_witout_id_layout.json key_pkbased "" "" "" "$READ_BUFFER_SIZE" "$PRAGMA_VALUES"
-
+rm key_pkbased
 
 run_for_type $WORK_DIR $LOAD_DIR "text" $NUM_COUNT "$READ_BUFFER_SIZE" "$PRAGMA_VALUES" 
 run_for_type $WORK_DIR $LOAD_DIR "integer" $NUM_COUNT "$READ_BUFFER_SIZE" "$PRAGMA_VALUES"
