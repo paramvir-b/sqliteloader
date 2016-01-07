@@ -1326,6 +1326,7 @@ int main(int argc, char **argv) {
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
+        sqlite3_close(db);
         return 1;
     }
 
@@ -1333,6 +1334,7 @@ int main(int argc, char **argv) {
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
+        sqlite3_close(db);
         return 1;
     }
 
@@ -1349,6 +1351,7 @@ int main(int argc, char **argv) {
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
+        sqlite3_close(db);
         return 1;
     }
 
@@ -1356,6 +1359,7 @@ int main(int argc, char **argv) {
     if(pLayout->pageSize != -1) {
         if(pLayout->pageSize < 512 || pLayout->pageSize > 65536 || !IS_POWER_OF_TWO(pLayout->pageSize)) {
             fprintf(stderr, "pageSize=%d Page size has to be b/w 512 and 65536 inclusive and power of 2\n", pLayout->pageSize);
+            sqlite3_close(db);
             return 1;
         }
 
@@ -1367,6 +1371,7 @@ int main(int argc, char **argv) {
         if (rc != SQLITE_OK) {
             fprintf(stderr, "SQL error: %s\n", zErrMsg);
             sqlite3_free(zErrMsg);
+            sqlite3_close(db);
             return 1;
         }
     }
@@ -1378,6 +1383,7 @@ int main(int argc, char **argv) {
         if (rc != SQLITE_OK) {
             fprintf(stderr, "Error running pragmaList. SQL error: %s\n", zErrMsg);
             sqlite3_free(zErrMsg);
+            sqlite3_close(db);
             return 1;
         }
     }
@@ -1386,6 +1392,7 @@ int main(int argc, char **argv) {
     if (isDebug)
         cout << "doesTableExist=" << doesTableExist << endl;
     if (doesTableExist == 2) {
+        sqlite3_close(db);
         return 1;
     }
 
@@ -1407,6 +1414,7 @@ int main(int argc, char **argv) {
         }
     } catch (string& e) {
         cout << e << endl;
+        sqlite3_close(db);
         return 1;
     }
 
@@ -1416,6 +1424,7 @@ int main(int argc, char **argv) {
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
+        sqlite3_close(db);
         return 1;
     }
 
@@ -1430,6 +1439,7 @@ int main(int argc, char **argv) {
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Prepare query=%s\n", insertBindQry.c_str());
         fprintf(stderr, "SQL error %d: preparing failed\n", rc);
+        sqlite3_close(db);
         return 1;
     }
 #endif
@@ -1451,6 +1461,9 @@ int main(int argc, char **argv) {
             else if (parseRet == -3) {
                 fprintf(stderr, "Error occurred at record number=%ld", recordCounter);
                 fprintf(stderr, "Try increasing using -f <N>\n");
+#ifndef DISABLE_SQL_CODE
+                sqlite3_close(db);
+#endif
                 return -1;
             }
         }
@@ -1471,11 +1484,13 @@ int main(int argc, char **argv) {
             if (rc != SQLITE_OK) {
                 fprintf(stderr, "Error occurred at record number=%ld", recordCounter);
                 fprintf(stderr, "SQL error %d: reset failed\n", rc);
+                sqlite3_close(db);
                 return 1;
             }
         } else {
             fprintf(stderr, "Error occurred at record number=%ld", recordCounter);
             fprintf(stderr, "SQL error %d: step failed\n", rc);
+            sqlite3_close(db);
             return 1;
         }
         if (commitCounter == commitAfter) {
@@ -1485,6 +1500,7 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "Error occurred at record number=%ld", recordCounter);
                 fprintf(stderr, "SQL error: %s\n", zErrMsg);
                 sqlite3_free(zErrMsg);
+                sqlite3_close(db);
                 return 1;
             }
             rc = sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, 0, &zErrMsg);
@@ -1492,6 +1508,7 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "Error occurred at record number=%ld", recordCounter);
                 fprintf(stderr, "SQL error: %s\n", zErrMsg);
                 sqlite3_free(zErrMsg);
+                sqlite3_close(db);
                 return 1;
             }
         }
