@@ -25,6 +25,8 @@ using optparse::OptionParser;
 
 #define ENABLE_SQL_CHECKS
 
+#define IS_POWER_OF_TWO(x) (!(x & (x - 1)))
+
 string to_lower_copy(string str) {
     string newStr = str;
     transform(newStr.begin(), newStr.end(), newStr.begin(), ::tolower);
@@ -188,9 +190,10 @@ struct Layout {
     char type;
     char separator;
     bool storeDateAsEpoch;
+    int pageSize;
 
     Layout(const int fieldListSize) :
-            type('D'), separator('\t'), storeDateAsEpoch(false) {
+            type('D'), separator('\t'), storeDateAsEpoch(false), pageSize(-1) {
         fieldList = new Field[fieldListSize];
         fieldListLen = fieldListSize;
     }
@@ -232,6 +235,7 @@ struct Layout {
     friend ostream& operator<<(ostream &outStream, Layout &layout) {
         outStream << "[ " << "name=" << layout.name << ", type=" << layout.type;
         outStream << ", storeDateAsEpoch=" << layout.storeDateAsEpoch;
+        outStream << ", pageSize=" << layout.pageSize;
         outStream << ", primaryKey=" << layout.primaryKey;
         outStream << ", isRowId=" << layout.isRowId;
         outStream << ", indexList(" << layout.indexList.size() << ")=[ ";
@@ -582,6 +586,11 @@ Layout * parseLayout(string layoutFileName, string argTableName, bool isRetainCa
     cJSON *jStoreDateAsEpoch = cJSON_GetObjectItem(root, "storeDateAsEpoch");
     if (jStoreDateAsEpoch != NULL && strlen(jStoreDateAsEpoch->valuestring) > 0) {
         pLayout->storeDateAsEpoch = strcmp(jStoreDateAsEpoch->valuestring, "true") == 0 ? 1 : 0;
+    }
+
+    cJSON *jPageSize = cJSON_GetObjectItem(root, "pageSize");
+    if (jPageSize != NULL) {
+        pLayout->pageSize = jPageSize->valueint;
     }
 
     // Parse index part of layout
@@ -1341,6 +1350,25 @@ int main(int argc, char **argv) {
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
         sqlite3_free(zErrMsg);
         return 1;
+    }
+
+    // Page Size
+    if(pLayout->pageSize != -1) {
+        if(pLayout->pageSize < 512 || pLayout->pageSize > 65536 || !IS_POWER_OF_TWO(pLayout->pageSize)) {
+            fprintf(stderr, "pageSize=%d Page size has to be b/w 512 and 65536 inclusive and power of 2\n", pLayout->pageSize);
+            return 1;
+        }
+
+        char pageSizePragma[50];
+        sprintf(pageSizePragma, "PRAGMA page_size = %d;", pLayout->pageSize);
+
+        cout<<"pageSizePragma="<<pageSizePragma<<endl;
+        rc = sqlite3_exec(db, pageSizePragma, NULL, 0, &zErrMsg);
+        if (rc != SQLITE_OK) {
+            fprintf(stderr, "SQL error: %s\n", zErrMsg);
+            sqlite3_free(zErrMsg);
+            return 1;
+        }
     }
 
     if (pragmaList.length() > 0) {

@@ -74,7 +74,7 @@ run_sqlite_loader() {
         time ./sqliteloader -v -s -l $layoutFile -i $inputFile $createTableNameCmd -o $outputFile ${readBufferSize:+-b $readBufferSize}
         rc=$?
         if (( rc != 0 )); then
-            "sqliteloader command faild"
+            "sqliteloader command failed"
             exit 1
         fi
     else

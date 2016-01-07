@@ -2,6 +2,7 @@
   "name": "table name",
   "type": "csv",
   "separator": "\t",
+  "pageSize": 512,
   "indexList": [
     {
       "columnList": [
