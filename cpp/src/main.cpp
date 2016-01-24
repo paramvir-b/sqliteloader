@@ -1210,7 +1210,7 @@ OptionParser createParser() {
             "Read buffer size in bytes. Default: 1048576");
     parser.add_option("-f").dest("f").metavar("<N>").set_default("1048576").help(
             "Field buffer size in bytes. Default: 1048576");
-    string versionStr = "sqliteloader 1.2.1-SNAPSHOT\n";
+    string versionStr = "sqliteloader 1.2.1\n";
     string sqliteVersion = string(sqlite3_libversion());
     versionStr += "Using Sqlite Version: " + sqliteVersion;
     parser.version(versionStr);
