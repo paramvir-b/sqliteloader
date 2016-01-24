@@ -1309,9 +1309,15 @@ int main(int argc, char **argv) {
     sqlite3 *db;
     char *zErrMsg = 0;
 
-    rc = sqlite3_config(SQLITE_CONFIG_SINGLETHREAD);
-    if (rc) {
-        fprintf(stderr, "Can't set thread mode to SQLITE_CONFIG_SINGLETHREAD\n");
+    if(sqlite3_threadsafe() != 0) {
+        if (isDebug)
+            cout << "Forcing it to run in single thread mode" << endl;
+        rc = sqlite3_config(SQLITE_CONFIG_SINGLETHREAD);
+        if (rc) {
+            fprintf(stderr, "Can't set thread mode to SQLITE_CONFIG_SINGLETHREAD\n");
+        }
+    } else {
+        if (isDebug) cout << "Already compiled in single threaded mode" << endl;
     }
 
     rc = sqlite3_open(dbFileName.c_str(), &db);
