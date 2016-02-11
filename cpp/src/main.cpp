@@ -1073,6 +1073,7 @@ string getCSVLayoutHelpExample() {
             "\n    \"type\" : \"csv\","
             "\n    \"separator\" : \"   \","
             "\n    \"isRowId\" : \"true\","
+            "\n    \"pageSize\": 65536,"
             "\n    \"primaryKey\" : {"
             "\n      \"columnList\" : ["
             "\n         {"
@@ -1149,6 +1150,8 @@ string getLayoutHelp() {
             "\n   separator  : Separator used for file. Only valid for csv files."
             "\n   storeDateAsEpoch: Store date as Epoch seconds. This will help reduce file size."
             "\n   isRowId    : Controls creation of internal row id column in sqlite db file. Default is true. Refer for details https://www.sqlite.org/withoutrowid.html"
+            "\n   pageSize   : Controls page size for output db file. This way you can specify different page size for different files."
+            "\n                For more details refer to https://www.sqlite.org/pragma.html#pragma_page_size"
             "\n   fieldList  : Array of field definitions"
             "\n   primaryKey : Primary key definitions"
             "\n   indexList  : Index definitions array"
@@ -1205,7 +1208,8 @@ OptionParser createParser() {
     parser.add_option("-v").dest("v").set_default("0").action("store_true").help("Debug mode");
     parser.add_option("-s").dest("s").set_default("0").action("store_true").help("Show stats");
     parser.add_option("-p").dest("p").metavar("<semi-colon-separated-pragma-list>").help(
-            "Semi colon separated pragma which ran before creation of DB.\n Example: -p \"pragma page_size=4096;pragma cache_size=1000;");
+            "Semi colon separated pragma which ran before creation of DB.\n Example: -p \"pragma page_size=4096;pragma cache_size=1000;"
+            "\nIf you specify page_size pragma then it will override the pageSize specifield in the layout file. Refer detail help with -h");
     parser.add_option("-b").dest("b").metavar("<N>").set_default("1048576").help(
             "Read buffer size in bytes. Default: 1048576");
     parser.add_option("-f").dest("f").metavar("<N>").set_default("1048576").help(

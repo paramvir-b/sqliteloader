@@ -56,7 +56,10 @@ Options
   -s                    Show stats
   -p <semi-colon-separated-pragma-list>
                         Semi colon separated pragma which ran before creation of DB.
-                         Example: -p "pragma page_size=4096;pragma cache_size=1000;
+                         Example: -p "pragma page_size=4096;pragma cache_size=1000;"
+                        If you specify page_size pragma then it will override
+                        the pageSize specifield in the layout file. Refer detail
+                        help with -h
   -b <N>                Read buffer size in bytes. Default: 1048576
   -f <N>                Field buffer size in bytes. Default: 1048576
 ```
@@ -87,6 +90,7 @@ General layout structure is define in json format:
 | separator       | Separator used for file. Only valid for csv files.|
 | storeDateAsEpoch| Store date as Epoch seconds. This will help reduce file size.|
 | isRowId         | Controls creation of internal row id column in sqlite db file. Default is true. Refer for details https://www.sqlite.org/withoutrowid.html |
+| pageSize        | Controls page size for output db file. This way you can specify different page size for different files. For more details refer to https://www.sqlite.org/pragma.html#pragma_page_size |
 | fieldList       | Array of field definitions |
 | primaryKey      | Primary key definitions |
 | indexList       | Index definitions array |
@@ -140,6 +144,7 @@ Example of csv layout:
     "type" : "csv",
     "separator" : "   ",
     "isRowId" : "true",
+    "pageSize": 65536,
     "primaryKey" : {
       "columnList" : [
          {
